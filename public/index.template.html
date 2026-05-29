@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Sistem Rincian SPD — Imigrasi 2026</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #faf9f5; display: flex; align-items: center; justify-content: center; min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+    #__bundler_loading { position: fixed; bottom: 20px; right: 20px; font: 13px/1.4 -apple-system, BlinkMacSystemFont, sans-serif; color: #666; background: #fff; padding: 8px 14px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.12); z-index: 10000; }
+    #__bundler_thumbnail { position: fixed; inset: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #faf9f5; z-index: 9999; }
+    #__bundler_thumbnail svg { width: 100%; height: 100%; object-fit: contain; }
+    #__bundler_placeholder { color: #999; font-size: 14px; }
+  </style>
+  <noscript>
+    <style>#__bundler_loading { display: none; }</style>
+    <div style="position:fixed;bottom:12px;left:12px;font:13px/1.4 -apple-system,BlinkMacSystemFont,sans-serif;color:#999;background:rgba(255,255,255,0.9);padding:6px 12px;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,0.08);z-index:10000;">
+      This page requires JavaScript to display.
+    </div>
+  </noscript>
+</head>
+<body>
+  <div id="__bundler_thumbnail">
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <rect width="100" height="100" fill="#0A1628"></rect>
+    <circle cx="50" cy="38" r="18" fill="none" stroke="#C8A951" stroke-width="2.5"></circle>
+    <text x="50" y="44" font-family="Georgia, serif" font-size="18" font-weight="700" fill="#C8A951" text-anchor="middle">SPD</text>
+    <rect x="30" y="64" width="40" height="3.5" rx="1.5" fill="#C8A951"></rect>
+    <rect x="34" y="73" width="32" height="3" rx="1.5" fill="#8BA7C7"></rect>
+    <rect x="38" y="81" width="24" height="3" rx="1.5" fill="#8BA7C7"></rect>
+  </svg>
+</div>
+  <div id="__bundler_loading">Unpacking...</div>
+
+  <script>
+    
+document.addEventListener('DOMContentLoaded', async function() {
+  const loading = document.getElementById('__bundler_loading');
+  function setStatus(msg) { if (loading) loading.textContent = msg; }
+
+  // Error sink persists across replaceWith since it's on window, not the DOM.
+  window.addEventListener('error', function(e) {
+    var p = document.body || document.documentElement;
+    var d = document.getElementById('__bundler_err') || p.appendChild(document.createElement('div'));
+    d.id = '__bundler_err';
+    d.style.cssText = 'position:fixed;bottom:12px;left:12px;right:12px;font:12px/1.4 ui-monospace,monospace;background:#2a1215;color:#ff8a80;padding:10px 14px;border-radius:8px;border:1px solid #5c2b2e;z-index:99999;white-space:pre-wrap;max-height:40vh;overflow:auto';
+    d.textContent = (d.textContent ? d.textContent + String.fromCharCode(10) : '') +
+      '[bundle] ' + (e.message || e.type) +
+      (e.filename ? ' (' + e.filename.slice(0, 60) + ':' + e.lineno + ')' : '');
+  }, true);
+
+  try {
+    setStatus('Unpacking...');
+    const templateEl = document.querySelector('script[type="__bundler/template"]');
+    if (!templateEl || !templateEl.textContent) {
+      throw new Error('Template script not found or empty');
+    }
+
+    const htmlString = JSON.parse(templateEl.textContent);
+    if (typeof htmlString !== 'string') {
+      throw new Error('Template is not a string');
+    }
+
+    const doc = new DOMParser().parseFromString(htmlString, 'text/html');
+    if (!doc || !doc.documentElement) {
+      throw new Error('Failed to parse HTML');
+    }
+
+    setStatus('Applying...');
+    document.replaceWith(doc.documentElement);
+  } catch (err) {
+    setStatus('Error unpacking: ' + err.message);
+  }
+});
+  </script>
+
+  <script type="__bundler/template">
+</script>
+</body>
+</html>
