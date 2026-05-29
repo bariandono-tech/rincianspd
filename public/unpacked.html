@@ -515,7 +515,8 @@
   .doc-table th{ background: #EEE; font-weight: 700; text-align: center; }
   .num{ text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .ctr{ text-align: center; }
-  .ttd-cell{ text-align: left; vertical-align: top; padding: 4px 6px; height: 56px; }
+  .ttd-cell{ text-align: left; vertical-align: top; padding: 3px 4px; height: 56px; font-size: 8pt; line-height: 1.15; }
+  .doc-table th.ttd-col{ font-size: 8pt; }
 
   .ttd-grid{
     display: grid; grid-template-columns: 1fr 1fr; gap: 28px;
@@ -551,7 +552,7 @@
 <div class="app" id="app">
 
   <header class="topbar">
-    <img class="crest" src="4e9b82d6-5ca9-4f6b-bdcc-22ba73f2ca1b" alt="Logo Imigrasi">
+    <img class="crest" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCI+CiAgPGRlZnM+CiAgICA8cmFkaWFsR3JhZGllbnQgaWQ9ImJnIiBjeD0iNTAlIiBjeT0iMzglIiByPSI3MCUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjMTQzYTZiIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzBBMTYyOCIvPgogICAgPC9yYWRpYWxHcmFkaWVudD4KICA8L2RlZnM+CiAgPGNpcmNsZSBjeD0iMTAwIiBjeT0iMTAwIiByPSI5NiIgZmlsbD0idXJsKCNiZykiIHN0cm9rZT0iI0M4QTk1MSIgc3Ryb2tlLXdpZHRoPSI0Ii8+CiAgPGNpcmNsZSBjeD0iMTAwIiBjeT0iMTAwIiByPSI4NCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjQzhBOTUxIiBzdHJva2Utd2lkdGg9IjEuNSIgb3BhY2l0eT0iMC43Ii8+CiAgPCEtLSBnbG9iZSAtLT4KICA8Y2lyY2xlIGN4PSIxMDAiIGN5PSI5MiIgcj0iMzQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0M4QTk1MSIgc3Ryb2tlLXdpZHRoPSIyLjUiLz4KICA8ZWxsaXBzZSBjeD0iMTAwIiBjeT0iOTIiIHJ4PSIxNCIgcnk9IjM0IiBmaWxsPSJub25lIiBzdHJva2U9IiNDOEE5NTEiIHN0cm9rZS13aWR0aD0iMS42Ii8+CiAgPGxpbmUgeDE9IjY2IiB5MT0iOTIiIHgyPSIxMzQiIHkyPSI5MiIgc3Ryb2tlPSIjQzhBOTUxIiBzdHJva2Utd2lkdGg9IjEuNiIvPgogIDxwYXRoIGQ9Ik03MCA3OCBIMTMwIE03MiAxMDYgSDEyOCIgc3Ryb2tlPSIjQzhBOTUxIiBzdHJva2Utd2lkdGg9IjEuMiIgZmlsbD0ibm9uZSIvPgogIDwhLS0gd2luZ3MgLS0+CiAgPHBhdGggZD0iTTY2IDkyIHEtMzAgLTYgLTQ0IDEwIHEyMiAtMiAzNCA4IHEtMjYgMCAtMzQgMTQgcTI0IC00IDM4IDYiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0M4QTk1MSIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgPHBhdGggZD0iTTEzNCA5MiBxMzAgLTYgNDQgMTAgcS0yMiAtMiAtMzQgOCBxMjYgMCAzNCAxNCBxLTI0IC00IC0zOCA2IiBmaWxsPSJub25lIiBzdHJva2U9IiNDOEE5NTEiIHN0cm9rZS13aWR0aD0iMiIvPgogIDwhLS0gYmFubmVyIHRleHQgLS0+CiAgPHBhdGggaWQ9ImFyYyIgZD0iTTQwIDE1MCBBNjAgNjAgMCAwIDAgMTYwIDE1MCIgZmlsbD0ibm9uZSIvPgogIDx0ZXh0IGZpbGw9IiNDOEE5NTEiIGZvbnQtZmFtaWx5PSJHZW9yZ2lhLCAnVGltZXMgTmV3IFJvbWFuJywgc2VyaWYiIGZvbnQtd2VpZ2h0PSI3MDAiIGZvbnQtc2l6ZT0iMjAiIGxldHRlci1zcGFjaW5nPSIzIj4KICAgIDx0ZXh0UGF0aCBocmVmPSIjYXJjIiBzdGFydE9mZnNldD0iNTAlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5JTUlHUkFTSTwvdGV4dFBhdGg+CiAgPC90ZXh0Pgo8L3N2Zz4K" alt="Logo Imigrasi">
     <div class="titles">
       <h1>SISTEM <span class="accent">RINCIAN SPD</span></h1>
       <div class="sub">Imigrasi 2026 · Kantor Imigrasi Kelas I TPI Pontianak</div>
@@ -1674,13 +1675,13 @@ function sheetNominatifHTML(){
             <th rowspan="2" style="width:3%">No</th>
             <th rowspan="2" style="width:13%">Nama / NIP</th>
             <th rowspan="2" style="width:4%">Gol</th>
-            <th rowspan="2" style="width:11%">Jabatan</th>
+            <th rowspan="2" style="width:9%">Jabatan</th>
             <th rowspan="2" style="width:7%">Tujuan</th>
             <th rowspan="2" style="width:7%">Tgl Pelaksanaan</th>
             <th colspan="5">Biaya Perjalanan (Rp)</th>
             <th rowspan="2" style="width:9%">Jumlah</th>
             <th rowspan="2" style="width:8%">Rekening</th>
-            <th rowspan="2" style="width:10%">TTD</th>
+            <th rowspan="2" class="ttd-col" style="width:14%">TTD</th>
           </tr>
           <tr>
             <th>Tiket PP</th>
