@@ -148,10 +148,6 @@ app.delete('/api/spd/:id', async (req, res) => {
 });
 
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-app.listen(PORT, async () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-  await initDB();
-});
+  // In development, serve unpacked.html directly so edits are visible without re-packing
+  const isDev = process.env.NODE_ENV === 'development';
+  const file = isDev ? 'unpacked.html' :
