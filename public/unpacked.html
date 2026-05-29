@@ -1102,9 +1102,10 @@ function totalsForPegawai(p){
   return { tiketPP, uangHarianTotal, grand };
 }
 
-function totalsAll(){
+function totalsAll(pegawaiArr){
+  const list = pegawaiArr || state.pegawai;
   let tiket=0, taksi=0, taksiDaerah=0, transport=0, uh=0, penginapan=0, repr=0, grand=0;
-  state.pegawai.forEach(p=>{
+  list.forEach(p=>{
     const t = totalsForPegawai(p);
     tiket += t.tiketPP; taksi += num(p.taksi); taksiDaerah += num(p.taksiDaerah);
     transport += num(p.transportKab); uh += t.uangHarianTotal;
@@ -1118,6 +1119,21 @@ function totalsAll(){
    ================================================================ */
 function save(){
   try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
+}
+
+async function saveToServer(){
+  try{
+    const resp = await fetch('/api/sessions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ header: state.header, pegawai: state.pegawai })
+    });
+    const json = await resp.json();
+    if (!json.success) throw new Error(json.error);
+    toast("✓ Data tersimpan ke server");
+  } catch(e){
+    toast("⚠ Gagal simpan ke server: " + e.message);
+  }
 }
 function load(){
   try{
@@ -1519,7 +1535,7 @@ function fillDatalist(){
    ================================================================ */
 document.getElementById('btn-save').addEventListener('click', ()=>{
   save();
-  toast("✓ Data tersimpan");
+  saveToServer();
 });
 document.getElementById('btn-reset').addEventListener('click', async ()=>{
   const ok = await confirmModal({title:"Reset form?", body:"Semua data form akan dikosongkan. Tindakan ini tidak bisa dibatalkan.", okText:"Reset"});
@@ -1728,10 +1744,11 @@ function sheetNominatifHTML(){
   `;
 }
 
-function sheetRekapHTML(){
-  const h = state.header;
-  const tot = totalsAll();
-  const rows = state.pegawai.map((p,i)=>{
+function sheetRekapHTML(h, pegawaiArr){
+  h = h || state.header;
+  pegawaiArr = pegawaiArr || state.pegawai;
+  const tot = totalsAll(pegawaiArr);
+  const rows = pegawaiArr.map((p,i)=>{
     const t = totalsForPegawai(p);
     return `
       <tr>
@@ -2148,9 +2165,26 @@ function printAllRincian(){
   const all = state.pegawai.map((_,i)=>sheetRincianHTML(i)).join("");
   injectPrintAndPrint(all);
 }
-function printRekap(){
-  if (!validateBeforePrint()) return;
-  injectPrintAndPrint(sheetRekapHTML());
+async function printRekap(){
+  try {
+    const resp = await fetch('/api/sessions');
+    const json = await resp.json();
+    if (json.success && json.data && json.data.length > 0) {
+      const allSheets = json.data.map(s => {
+        const d = s.data || {};
+        return sheetRekapHTML(d.header, d.pegawai);
+      }).join('');
+      injectPrintAndPrint(allSheets);
+    } else {
+      // Tidak ada data di server, cetak state saat ini
+      if (!validateBeforePrint()) return;
+      injectPrintAndPrint(sheetRekapHTML());
+    }
+  } catch(e) {
+    // Fallback ke state saat ini jika server tidak tersedia
+    if (!validateBeforePrint()) return;
+    injectPrintAndPrint(sheetRekapHTML());
+  }
 }
 
 window.addEventListener('afterprint', ()=>{

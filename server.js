@@ -44,6 +44,15 @@ async function initDB() {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS spd_sessions (
+        id SERIAL PRIMARY KEY,
+        judul_kegiatan VARCHAR(500),
+        nomor_spt VARCHAR(100),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        data JSONB NOT NULL
+      )
+    `);
     console.log('✅ Database initialized');
   } catch (err) {
     console.error('❌ DB init error:', err.message);
@@ -51,6 +60,47 @@ async function initDB() {
 }
 
 // ─── API ROUTES ───────────────────────────────────────────────────────────────
+
+// ─── SESSIONS (full SPD state per kegiatan) ──────────────────────────────────
+
+app.post('/api/sessions', async (req, res) => {
+  try {
+    const { header, pegawai } = req.body;
+    if (!header || !Array.isArray(pegawai)) {
+      return res.status(400).json({ success: false, error: 'data tidak valid' });
+    }
+    const { rows } = await pool.query(
+      `INSERT INTO spd_sessions (judul_kegiatan, nomor_spt, data)
+       VALUES ($1, $2, $3) RETURNING id, created_at`,
+      [header.judulKegiatan || null, header.nomorSPT || null, JSON.stringify({ header, pegawai })]
+    );
+    res.status(201).json({ success: true, data: rows[0] });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/sessions', async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT id, judul_kegiatan, nomor_spt, created_at, data FROM spd_sessions ORDER BY created_at DESC'
+    );
+    res.json({ success: true, data: rows });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.delete('/api/sessions/:id', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM spd_sessions WHERE id = $1', [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ─── SPD DATA ─────────────────────────────────────────────────────────────────
 
 app.get('/api/spd', async (req, res) => {
   try {
