@@ -13,25 +13,43 @@ if (!(Test-Path $indexPath)) {
     exit 1
 }
 
-# Read the unpacked HTML as raw text
-$htmlContent = Get-Content -Raw -Path $unpackedPath -Encoding UTF8
+# Read files
+$htmlContent  = Get-Content -Raw -Path $unpackedPath -Encoding UTF8
+$indexContent = Get-Content -Raw -Path $indexPath    -Encoding UTF8
 
-# Encode it as a JSON string (this handles all escaping: ", \, newlines, etc.)
+# JSON-encode the HTML (handles ", \, newlines, etc.)
 $jsonString = ConvertTo-Json $htmlContent -Compress
 
-# Read the current index.html
-$indexContent = Get-Content -Raw -Path $indexPath -Encoding UTF8
+# Use plain string search/replace to avoid regex backreference issues
+# (HTML template literals contain ${i}, ${key}, etc. that would break [regex]::Replace)
+$startTag = '<script type="__bundler/template">'
+$endTag   = '</script>'
 
-# Replace the content between <script type="__bundler/template"> ... </script>
-$pattern     = '(?s)(<script type="__bundler/template">)(.*?)(</script>)'
-$replacement = "`$1`n$jsonString`n`$3"
+$startIdx = $indexContent.IndexOf($startTag)
+if ($startIdx -eq -1) {
+    Write-Warning "Tag __bundler/template tidak ditemukan di index.html"
+    exit 1
+}
 
-$newIndex = [regex]::Replace($indexContent, $pattern, $replacement)
+$contentStart = $startIdx + $startTag.Length
+$endIdx = $indexContent.IndexOf($endTag, $contentStart)
+if ($endIdx -eq -1) {
+    Write-Warning "Closing </script> tidak ditemukan setelah template tag"
+    exit 1
+}
+
+$before   = $indexContent.Substring(0, $contentStart)
+$after    = $indexContent.Substring($endIdx)
+$newIndex = $before + "`n" + $jsonString + "`n" + $after
 
 if ($newIndex -eq $indexContent) {
-    Write-Warning "Tidak ada perubahan - pattern __bundler/template tidak ditemukan atau sudah sama."
+    Write-Warning "Tidak ada perubahan - konten sudah sama."
 } else {
-    Set-Content -Path $indexPath -Value $newIndex -Encoding UTF8 -NoNewline
+    [System.IO.File]::WriteAllText(
+        (Resolve-Path $indexPath).Path,
+        $newIndex,
+        [System.Text.Encoding]::UTF8
+    )
     $size = (Get-Item $indexPath).Length
     Write-Output "Berhasil! index.html diperbarui - $size bytes"
 }
