@@ -542,6 +542,43 @@
     .col-3, .col-4, .col-6{ grid-column: span 2; }
     .pegawai-totals{ grid-template-columns: repeat(2, 1fr); }
   }
+
+  /* ============================================================
+     KELOLA REKAP TAB
+     ============================================================ */
+  .kelola-table{
+    width: 100%; border-collapse: collapse; font-size: 13px;
+  }
+  .kelola-table th{
+    background: var(--card-2); color: var(--text-2); font-weight: 600;
+    padding: 10px 12px; text-align: left; border-bottom: 2px solid var(--border);
+    letter-spacing: .06em; font-size: 12px; text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .kelola-table td{
+    padding: 10px 12px; border-bottom: 1px solid var(--border);
+    vertical-align: middle; color: var(--text);
+  }
+  .kelola-table tr:last-child td{ border-bottom: none; }
+  .kelola-table tr:hover td{ background: rgba(255,255,255,.03); }
+  .kelola-table .num-col{ text-align: right; font-variant-numeric: tabular-nums; }
+  .kelola-table .ctr{ text-align: center; }
+  .kelola-table .judul{ font-weight: 600; }
+  .kelola-table .sub{ font-size: 11px; color: var(--text-3); margin-top: 2px; }
+  .kelola-table .aksi-cell{ display: flex; gap: 6px; flex-wrap: wrap; }
+  .kelola-empty{
+    padding: 48px 0; text-align: center; color: var(--text-3);
+    font-size: 14px; letter-spacing: .06em;
+  }
+  .kelola-total-row td{
+    background: var(--card-2); font-weight: 700;
+    border-top: 2px solid var(--border);
+    color: var(--gold-soft);
+  }
+  @media (max-width: 900px){
+    .kelola-table th, .kelola-table td{ padding: 8px; font-size: 12px; }
+    .kelola-table .aksi-cell{ flex-direction: column; }
+  }
 </style>
 </head>
 <body>
@@ -566,6 +603,7 @@
   <nav class="tabs" role="tablist">
     <button class="tab active" data-tab="pengisian" role="tab"><span class="dot"></span>Pengisian</button>
     <button class="tab" data-tab="dpr" role="tab"><span class="dot"></span>DPR PIC</button>
+    <button class="tab" data-tab="kelola" role="tab"><span class="dot"></span>Kelola Rekap</button>
   </nav>
 
   <main class="main">
@@ -800,6 +838,22 @@
           <button class="btn btn-ghost" id="btn-dpr-preview-close">✕ Tutup Preview</button>
         </div>
         <div class="paper-stack" id="dpr-paper"></div>
+      </div>
+    </section>
+
+    <!-- ========== VIEW: KELOLA REKAP ========== -->
+    <section class="view" id="view-kelola">
+      <div class="section">
+        <div class="section-head">
+          <div class="num">📁</div>
+          <h2>Kelola Data Tersimpan</h2>
+          <button class="btn btn-ghost btn-sm" id="btn-refresh-sessions">↻ Muat Ulang</button>
+        </div>
+        <div class="section-body">
+          <div id="sessions-container">
+            <div class="kelola-empty">Memuat data dari server…</div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -1196,6 +1250,7 @@ document.querySelectorAll('.tab').forEach(t=>{
     t.classList.add('active');
     document.getElementById('view-'+t.dataset.tab).classList.add('active');
     if (t.dataset.tab === 'dpr') renderDPR();
+    if (t.dataset.tab === 'kelola') { _cachedSessions = []; loadSessions(); }
   });
 });
 
@@ -2186,6 +2241,162 @@ async function printRekap(){
     injectPrintAndPrint(sheetRekapHTML());
   }
 }
+
+/* ================================================================
+   KELOLA REKAP — session management
+   ================================================================ */
+function formatTanggalWaktu(isoStr){
+  if (!isoStr) return "—";
+  const d = new Date(isoStr);
+  return d.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})
+    + ' ' + d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+}
+
+async function loadSessions(){
+  const container = document.getElementById('sessions-container');
+  container.innerHTML = '<div class="kelola-empty">Memuat data dari server…</div>';
+  try{
+    const resp = await fetch('/api/sessions');
+    const json = await resp.json();
+    if (!json.success) throw new Error(json.error);
+    renderSessionsTable(json.data);
+  } catch(e){
+    container.innerHTML = `<div class="kelola-empty">⚠ Gagal memuat: ${e.message}</div>`;
+  }
+}
+
+function renderSessionsTable(sessions){
+  const container = document.getElementById('sessions-container');
+  if (!sessions || sessions.length === 0){
+    container.innerHTML = '<div class="kelola-empty">Belum ada data tersimpan di server.<br/>Gunakan tombol <b>💾 Simpan Data</b> pada tab Pengisian.</div>';
+    return;
+  }
+  let grandTotal = 0;
+  const rows = sessions.map((s, i)=>{
+    const d = s.data || {};
+    const h = d.header || {};
+    const pegawai = d.pegawai || [];
+    const tot = totalsAll(pegawai);
+    grandTotal += tot.grand;
+    const judul = h.judulKegiatan || '—';
+    const nomorSPT = h.nomorSPT || '—';
+    const tgl = formatTanggalWaktu(s.created_at);
+    return `
+      <tr>
+        <td class="ctr">${i+1}</td>
+        <td>
+          <div class="judul">${judul}</div>
+          <div class="sub">${nomorSPT}</div>
+        </td>
+        <td class="ctr">${pegawai.length}</td>
+        <td class="num-col">${formatRupiah(tot.grand)}</td>
+        <td class="sub" style="white-space:nowrap">${tgl}</td>
+        <td>
+          <div class="aksi-cell">
+            <button class="btn btn-primary btn-sm" onclick="muatSesiKeForm(${s.id})">✏️ Muat &amp; Edit</button>
+            <button class="btn btn-print btn-sm" onclick="cetakRekapSesi(${s.id})">🖨️ Cetak Rekap</button>
+            <button class="btn btn-danger btn-sm" onclick="hapusSesi(${s.id})">🗑️ Hapus</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  container.innerHTML = `
+    <table class="kelola-table">
+      <thead>
+        <tr>
+          <th class="ctr" style="width:3%">No</th>
+          <th>Judul Kegiatan / Nomor SPT</th>
+          <th class="ctr" style="width:8%">Pegawai</th>
+          <th class="num-col" style="width:16%">Total Biaya</th>
+          <th style="width:16%">Disimpan</th>
+          <th style="width:22%">Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows}
+      </tbody>
+      <tfoot>
+        <tr class="kelola-total-row">
+          <td colspan="2" style="text-align:right">TOTAL KESELURUHAN</td>
+          <td class="ctr">${sessions.length} sesi</td>
+          <td class="num-col">${formatRupiah(grandTotal)}</td>
+          <td colspan="2"></td>
+        </tr>
+      </tfoot>
+    </table>
+  `;
+}
+
+// Simpan semua sesi di memori untuk lookup cepat
+let _cachedSessions = [];
+async function _ensureSessions(){
+  if (_cachedSessions.length === 0){
+    const resp = await fetch('/api/sessions');
+    const json = await resp.json();
+    if (json.success) _cachedSessions = json.data;
+  }
+  return _cachedSessions;
+}
+
+async function muatSesiKeForm(id){
+  try{
+    const sessions = await _ensureSessions();
+    const sesi = sessions.find(s => s.id === id);
+    if (!sesi) { toast("⚠ Sesi tidak ditemukan"); return; }
+    const d = sesi.data || {};
+    if (!d.header || !d.pegawai) { toast("⚠ Format data tidak valid"); return; }
+    state.header = { ...defaultHeader, ...d.header };
+    state.pegawai = d.pegawai.length
+      ? d.pegawai.map(p=>({...blankPegawai(),...p}))
+      : [blankPegawai()];
+    save();
+    bindHeader();
+    renderAllPegawai();
+    // Switch ke tab Pengisian
+    document.querySelector('[data-tab="pengisian"]').click();
+    toast("✓ Data sesi dimuat ke form");
+  } catch(e){
+    toast("⚠ Gagal memuat sesi: " + e.message);
+  }
+}
+
+async function cetakRekapSesi(id){
+  try{
+    const sessions = await _ensureSessions();
+    const sesi = sessions.find(s => s.id === id);
+    if (!sesi) { toast("⚠ Sesi tidak ditemukan"); return; }
+    const d = sesi.data || {};
+    injectPrintAndPrint(sheetRekapHTML(d.header, d.pegawai));
+  } catch(e){
+    toast("⚠ Gagal cetak: " + e.message);
+  }
+}
+
+async function hapusSesi(id){
+  const ok = await confirmModal({
+    title: "Hapus data ini?",
+    body: "Data sesi yang dihapus tidak dapat dipulihkan.",
+    okText: "Hapus", danger: true
+  });
+  if (!ok) return;
+  try{
+    const resp = await fetch('/api/sessions/' + id, { method: 'DELETE' });
+    const json = await resp.json();
+    if (!json.success) throw new Error(json.error);
+    _cachedSessions = _cachedSessions.filter(s => s.id !== id);
+    renderSessionsTable(_cachedSessions);
+    toast("✓ Data berhasil dihapus");
+  } catch(e){
+    toast("⚠ Gagal hapus: " + e.message);
+  }
+}
+
+document.getElementById('btn-refresh-sessions').addEventListener('click', ()=>{
+  _cachedSessions = [];
+  loadSessions();
+});
 
 window.addEventListener('afterprint', ()=>{
   // clear print root so it doesn't bloat DOM
