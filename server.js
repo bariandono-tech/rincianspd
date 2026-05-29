@@ -7,9 +7,13 @@ const { Pool } = require('pg');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Neon (Vercel Postgres) sudah include SSL di connection string
+// Jangan dobel-set ssl agar tidak konflik
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
+  ssl: process.env.DATABASE_URL?.includes('sslmode')
+    ? undefined  // biarkan connection string yang handle SSL
+    : { rejectUnauthorized: false }
 });
 
 app.use(cors());
