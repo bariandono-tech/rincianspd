@@ -1175,16 +1175,22 @@ function save(){
   try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
 }
 
+let _editingSessionId = null;
+
 async function saveToServer(){
   try{
-    const resp = await fetch('/api/sessions', {
-      method: 'POST',
+    const isEdit = _editingSessionId !== null;
+    const url = isEdit ? '/api/sessions/' + _editingSessionId : '/api/sessions';
+    const method = isEdit ? 'PUT' : 'POST';
+    const resp = await fetch(url, {
+      method,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ header: state.header, pegawai: state.pegawai })
     });
     const json = await resp.json();
     if (!json.success) throw new Error(json.error);
-    toast("✓ Data tersimpan ke server");
+    _cachedSessions = [];
+    toast(isEdit ? "✓ Data sesi diperbarui" : "✓ Data tersimpan ke server");
   } catch(e){
     toast("⚠ Gagal simpan ke server: " + e.message);
   }
@@ -1598,6 +1604,8 @@ document.getElementById('btn-reset').addEventListener('click', async ()=>{
     state.header = { ...defaultHeader };
     state.pegawai = [ blankPegawai() ];
     state.dpr = JSON.parse(JSON.stringify(defaultDPR));
+    _editingSessionId = null;
+    setEditingBadge(null);
     save();
     bindHeader();
     renderAllPegawai();
@@ -2351,15 +2359,34 @@ async function muatSesiKeForm(id){
     state.pegawai = d.pegawai.length
       ? d.pegawai.map(p=>({...blankPegawai(),...p}))
       : [blankPegawai()];
+    _editingSessionId = id;
     save();
     bindHeader();
     renderAllPegawai();
-    // Switch ke tab Pengisian
+    setEditingBadge(id, sesi);
     document.querySelector('[data-tab="pengisian"]').click();
-    toast("✓ Data sesi dimuat ke form");
+    toast("✓ Data sesi dimuat — Simpan Data akan memperbarui sesi ini");
   } catch(e){
     toast("⚠ Gagal memuat sesi: " + e.message);
   }
+}
+
+function setEditingBadge(id, sesi){
+  let badge = document.getElementById('editing-badge');
+  if (!id){
+    if (badge) badge.remove();
+    return;
+  }
+  if (!badge){
+    badge = document.createElement('div');
+    badge.id = 'editing-badge';
+    badge.style.cssText = 'background:rgba(200,169,81,.15);border:1px solid var(--gold);color:var(--gold-soft);'
+      + 'padding:6px 14px;border-radius:6px;font-size:12px;display:flex;align-items:center;gap:8px;';
+    const actBar = document.querySelector('#view-pengisian .actions-bar');
+    actBar.insertBefore(badge, actBar.firstChild);
+  }
+  const judul = (sesi && sesi.data && sesi.data.header && sesi.data.header.judulKegiatan) || ('Sesi #' + id);
+  badge.innerHTML = `✏️ <span>Mode Edit: <b>${judul}</b></span>`;
 }
 
 async function cetakRekapSesi(id){

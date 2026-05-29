@@ -91,6 +91,25 @@ app.get('/api/sessions', async (req, res) => {
   }
 });
 
+app.put('/api/sessions/:id', async (req, res) => {
+  try {
+    const { header, pegawai } = req.body;
+    if (!header || !Array.isArray(pegawai)) {
+      return res.status(400).json({ success: false, error: 'data tidak valid' });
+    }
+    const { rows } = await pool.query(
+      `UPDATE spd_sessions SET judul_kegiatan=$1, nomor_spt=$2, data=$3
+       WHERE id=$4 RETURNING id, created_at`,
+      [header.judulKegiatan || null, header.nomorSPT || null,
+       JSON.stringify({ header, pegawai }), req.params.id]
+    );
+    if (rows.length === 0) return res.status(404).json({ success: false, error: 'Sesi tidak ditemukan' });
+    res.json({ success: true, data: rows[0] });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 app.delete('/api/sessions/:id', async (req, res) => {
   try {
     await pool.query('DELETE FROM spd_sessions WHERE id = $1', [req.params.id]);
