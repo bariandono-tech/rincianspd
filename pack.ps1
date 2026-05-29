@@ -43,4 +43,16 @@ if ($endIdx -eq -1) {
 
 $before   = $indexContent.Substring(0, $contentStart)
 $after    = $indexContent.Substring($endIdx)
-$newIndex = $before + "`n" + $jsonString + "`n
+$newIndex = $before + "`n" + $jsonString + "`n" + $after
+
+if ($newIndex -eq $indexContent) {
+    Write-Warning "Tidak ada perubahan - konten sudah sama."
+} else {
+    [System.IO.File]::WriteAllText(
+        (Resolve-Path $indexPath).Path,
+        $newIndex,
+        [System.Text.Encoding]::UTF8
+    )
+    $size = (Get-Item $indexPath).Length
+    Write-Output "Berhasil! index.html diperbarui - $size bytes"
+}
