@@ -662,6 +662,7 @@
         <button class="btn btn-print" id="btn-print-nominatif">🖨️ Cetak Nominatif</button>
         <button class="btn btn-print" id="btn-print-dpr">🖨️ Cetak DPR PIC</button>
         <button class="btn btn-print" id="btn-print-all">🖨️ Cetak Rincian SPD Semua</button>
+        <button class="btn btn-print" id="btn-print-rekap">📋 Cetak Rekap</button>
         <div class="spacer"></div>
         <button class="btn btn-ghost" id="btn-loadexample">⤴ Muat Contoh</button>
         <button class="btn btn-danger" id="btn-reset">🗑️ Reset Form</button>
@@ -1551,6 +1552,7 @@ document.getElementById('btn-print-dpr').addEventListener('click', ()=>{
   setTimeout(printDPRBoth, 80);
 });
 document.getElementById('btn-print-all').addEventListener('click', ()=>printAllRincian());
+document.getElementById('btn-print-rekap').addEventListener('click', ()=>printRekap());
 
 /* DPR PIC tab buttons */
 document.getElementById('btn-dpr-save').addEventListener('click', ()=>{ save(); toast("✓ Data DPR tersimpan"); });
@@ -1708,6 +1710,84 @@ function sheetNominatifHTML(){
 
       <div style="margin-top:8px; font-size:10pt;"><i>Terbilang: ${terbilang(tot.grand)}</i></div>
 
+      <div class="ttd-grid">
+        <div class="ttd">
+          <div>Mengetahui,</div>
+          <div class="role">Pejabat Pembuat Komitmen,</div>
+          <div class="name">${h.namaPPK||"—"}</div>
+          <div class="nip">NIP. ${h.nipPPK||"—"}</div>
+        </div>
+        <div class="ttd">
+          <div>${h.kotaTerbit||"Pontianak"}, ${formatTanggalID(h.tanggalSPT)||"—"}</div>
+          <div class="role">Bendahara Pengeluaran,</div>
+          <div class="name">${h.namaBendahara||"—"}</div>
+          <div class="nip">NIP. ${h.nipBendahara||"—"}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function sheetRekapHTML(){
+  const h = state.header;
+  const tot = totalsAll();
+  const rows = state.pegawai.map((p,i)=>{
+    const t = totalsForPegawai(p);
+    return `
+      <tr>
+        <td class="ctr">${i+1}</td>
+        <td><b>${p.nama||"—"}</b><br/>NIP. ${p.nip||"—"}</td>
+        <td class="ctr">${p.golongan||""}</td>
+        <td>${p.jabatan||""}</td>
+        <td class="ctr">${p.tujuan||h.tujuanKota||""}</td>
+        <td class="ctr">${tglPelaksanaanText(p)}</td>
+        <td class="num">${t.tiketPP? formatRupiah(t.tiketPP):"-"}</td>
+        <td class="num">${num(p.taksi)? formatRupiah(p.taksi):"-"}</td>
+        <td class="num">${num(p.taksiDaerah)? formatRupiah(p.taksiDaerah):"-"}</td>
+        <td class="num">${t.uangHarianTotal? formatRupiah(t.uangHarianTotal):"-"}</td>
+        <td class="num">${num(p.penginapan)? formatRupiah(p.penginapan):"-"}</td>
+        <td class="num"><b>${formatRupiah(t.grand)}</b></td>
+      </tr>
+    `;
+  }).join("");
+  return `
+    <div class="sheet landscape">
+      ${kopHTML()}
+      <div class="doc-title">REKAPITULASI BIAYA PERJALANAN DINAS</div>
+      <div class="doc-subtitle">
+        <div>${h.judulKegiatan||"—"}</div>
+        <div style="margin-top:4px">SPT Nomor: <b>${h.nomorSPT||"—"}</b> &nbsp;|&nbsp; Tanggal: <b>${formatTanggalID(h.tanggalSPT)||"—"}</b></div>
+      </div>
+      <table class="doc-table">
+        <thead>
+          <tr>
+            <th rowspan="2" style="width:3%">No</th>
+            <th rowspan="2" style="width:16%">Nama / NIP</th>
+            <th rowspan="2" style="width:4%">Gol</th>
+            <th rowspan="2" style="width:12%">Jabatan</th>
+            <th rowspan="2" style="width:7%">Tujuan</th>
+            <th rowspan="2" style="width:8%">Tgl Pelaksanaan</th>
+            <th colspan="5" style="text-align:center">Komponen Biaya (Rp)</th>
+            <th rowspan="2" style="width:10%">Total Biaya</th>
+          </tr>
+          <tr>
+            <th>Tiket PP</th><th>Taksi</th><th>Taksi Daerah</th><th>Uang Harian</th><th>Penginapan</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows}
+          <tr>
+            <td colspan="6" class="ctr"><b>JUMLAH</b></td>
+            <td class="num"><b>${formatRupiah(tot.tiket)}</b></td>
+            <td class="num"><b>${formatRupiah(tot.taksi)}</b></td>
+            <td class="num"><b>${formatRupiah(tot.taksiDaerah)}</b></td>
+            <td class="num"><b>${formatRupiah(tot.uh)}</b></td>
+            <td class="num"><b>${formatRupiah(tot.penginapan)}</b></td>
+            <td class="num"><b>${formatRupiah(tot.grand)}</b></td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="margin-top:8px; font-size:9pt;"><i>Terbilang: ${terbilang(tot.grand)}</i></div>
       <div class="ttd-grid">
         <div class="ttd">
           <div>Mengetahui,</div>
@@ -2067,6 +2147,10 @@ function printAllRincian(){
   if (!validateBeforePrint()) return;
   const all = state.pegawai.map((_,i)=>sheetRincianHTML(i)).join("");
   injectPrintAndPrint(all);
+}
+function printRekap(){
+  if (!validateBeforePrint()) return;
+  injectPrintAndPrint(sheetRekapHTML());
 }
 
 window.addEventListener('afterprint', ()=>{
