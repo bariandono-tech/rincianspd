@@ -1,0 +1,2281 @@
+<!DOCTYPE html>
+<html lang="id"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sistem Rincian SPD — Imigrasi 2026</title>
+<style>
+  /* ============================================================
+     TOKENS
+     ============================================================ */
+  :root{
+    --bg:        #0A1628;
+    --panel:     #0D1F3C;
+    --card:      #112240;
+    --card-2:    #0F1E3A;
+    --border:    #1E3A5F;
+    --border-2:  #2A4A6F;
+    --input:     #1A2E4A;
+    --gold:      #C8A951;
+    --gold-2:    #A8892F;
+    --gold-soft: #E2C77A;
+    --blue:      #1A6EBD;
+    --blue-2:    #1558A0;
+    --text:      #E8F0FE;
+    --text-2:    #8BA7C7;
+    --text-3:    #5E789C;
+    --danger:    #E5484D;
+    --ok:        #2BB673;
+    --radius:    8px;
+    --radius-sm: 5px;
+    --shadow:    0 6px 20px rgba(0,0,0,.35);
+    --font:      'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
+  }
+
+  *{ box-sizing: border-box; }
+  html, body{ height: 100%; }
+  body{
+    margin:0; background: var(--bg); color: var(--text);
+    font-family: var(--font); font-size: 14px; line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+  }
+  button, input, select, textarea{ font-family: inherit; font-size: inherit; color: inherit; }
+
+  /* ============================================================
+     APP SHELL
+     ============================================================ */
+  .app{ min-height: 100vh; display: flex; flex-direction: column; }
+
+  .topbar{
+    background: linear-gradient(180deg, #0E2245 0%, #0A1B36 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 28px;
+    display: flex; align-items: center; gap: 18px;
+    position: sticky; top: 0; z-index: 20;
+  }
+  .topbar .crest{
+    width: 52px; height: 52px; flex: 0 0 52px;
+    border-radius: 50%; object-fit: contain;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,.4));
+  }
+  .topbar .titles{ flex: 1; min-width: 0; }
+  .topbar h1{
+    margin: 0; font-size: 18px; letter-spacing: .14em;
+    color: var(--text); font-weight: 700;
+  }
+  .topbar h1 .accent{ color: var(--gold); }
+  .topbar .sub{
+    margin-top: 2px; font-size: 11px; letter-spacing: .18em;
+    color: var(--text-2); text-transform: uppercase;
+  }
+  .topbar .meta{
+    text-align: right; font-size: 11px; color: var(--text-3);
+    letter-spacing: .1em;
+  }
+  .topbar .meta strong{ color: var(--gold-soft); font-weight: 600; }
+
+  /* Tabs */
+  .tabs{
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 0 28px;
+    display: flex; gap: 6px;
+    position: sticky; top: 76px; z-index: 19;
+  }
+  .tab{
+    appearance: none; background: transparent; border: 0;
+    padding: 14px 22px; cursor: pointer;
+    color: var(--text-2); font-size: 13px; letter-spacing: .14em;
+    text-transform: uppercase; font-weight: 600;
+    border-bottom: 2px solid transparent;
+    transition: color .15s, border-color .15s;
+  }
+  .tab:hover{ color: var(--text); }
+  .tab.active{
+    color: var(--text);
+    border-bottom-color: var(--gold);
+  }
+  .tab .dot{
+    display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--gold); margin-right: 8px; vertical-align: middle;
+    opacity: .35;
+  }
+  .tab.active .dot{ opacity: 1; box-shadow: 0 0 8px var(--gold); }
+
+  /* Main */
+  .main{ padding: 24px 28px 48px; max-width: 1380px; width: 100%; margin: 0 auto; }
+  .view{ display: none; }
+  .view.active{ display: block; }
+
+  /* ============================================================
+     CARDS / SECTIONS
+     ============================================================ */
+  .section{
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .section-head{
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 20px;
+    background: linear-gradient(180deg, rgba(200,169,81,.06), transparent);
+    border-bottom: 1px solid var(--border);
+  }
+  .section-head .num{
+    width: 26px; height: 26px; border-radius: 4px;
+    background: var(--gold); color: #1A1305;
+    display: grid; place-items: center; font-weight: 700; font-size: 12px;
+  }
+  .section-head h2{
+    margin: 0; font-size: 13px; letter-spacing: .16em;
+    text-transform: uppercase; font-weight: 700;
+  }
+  .section-head .hint{
+    margin-left: auto; font-size: 11px; color: var(--text-3);
+    letter-spacing: .08em;
+  }
+  .section-body{ padding: 18px 20px 20px; }
+
+  /* ============================================================
+     FORM FIELDS
+     ============================================================ */
+  .grid{ display: grid; gap: 14px; }
+  .g-2{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .g-3{ grid-template-columns: repeat(3, minmax(0,1fr)); }
+  .g-4{ grid-template-columns: repeat(4, minmax(0,1fr)); }
+  .g-6{ grid-template-columns: repeat(6, minmax(0,1fr)); }
+  .col-2{ grid-column: span 2; }
+  .col-3{ grid-column: span 3; }
+  .col-4{ grid-column: span 4; }
+  .col-6{ grid-column: span 6; }
+  .col-all{ grid-column: 1 / -1; }
+
+  .field label{
+    display: block; font-size: 11px; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--text-2);
+    margin-bottom: 6px; font-weight: 600;
+  }
+  .field label .req{ color: var(--gold); margin-left: 3px; }
+  .field input, .field select, .field textarea{
+    width: 100%; padding: 10px 12px;
+    background: var(--input);
+    border: 1px solid var(--border-2);
+    color: var(--text);
+    border-radius: var(--radius-sm);
+    outline: none;
+    transition: border-color .15s, box-shadow .15s, background .15s;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(200,169,81,.18);
+    background: #1F375C;
+  }
+  .field textarea{ resize: vertical; min-height: 64px; }
+  .field input[type="number"]{ font-variant-numeric: tabular-nums; }
+  .field.invalid input, .field.invalid select, .field.invalid textarea{
+    border-color: var(--danger);
+    box-shadow: 0 0 0 3px rgba(229,72,77,.15);
+  }
+  .field .hint{ font-size: 11px; color: var(--text-3); margin-top: 4px; }
+
+  /* Pegawai card */
+  .pegawai-card{
+    background: var(--card-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 14px;
+    overflow: hidden;
+  }
+  .pegawai-head{
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 16px;
+    background: linear-gradient(90deg, rgba(26,110,189,.18), transparent 60%);
+    border-bottom: 1px solid var(--border);
+  }
+  .pegawai-head .badge{
+    width: 26px; height: 26px; border-radius: 50%;
+    background: var(--blue); color: #fff;
+    display: grid; place-items: center; font-weight: 700; font-size: 12px;
+  }
+  .pegawai-head .name{ font-weight: 600; color: var(--text); }
+  .pegawai-head .name .placeholder{ color: var(--text-3); font-weight: 500; }
+  .pegawai-head .actions{ margin-left: auto; display: flex; gap: 8px; }
+  .pegawai-body{ padding: 14px 16px; }
+
+  .pegawai-totals{
+    margin-top: 14px; padding-top: 14px;
+    border-top: 1px dashed var(--border-2);
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+  }
+  .stat{
+    background: rgba(255,255,255,.02);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+  }
+  .stat .k{ font-size: 10px; color: var(--text-3); letter-spacing: .14em; text-transform: uppercase; }
+  .stat .v{ margin-top: 4px; font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .stat.total{
+    background: linear-gradient(135deg, rgba(200,169,81,.18), rgba(200,169,81,.04));
+    border-color: rgba(200,169,81,.5);
+  }
+  .stat.total .v{ color: var(--gold-soft); font-size: 16px; }
+
+  /* Bukti block */
+  .bukti-block{
+    margin-top: 14px; padding: 14px 16px;
+    background: rgba(26,110,189,.06);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+  }
+  .bukti-title{
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--text-2); font-weight: 600; margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .bukti-title::before{
+    content: "📎"; font-size: 13px;
+  }
+  .bukti-block select{ font-size: 13px; }
+
+  /* DPR line items */
+  .dpr-item{
+    background: var(--card-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px; margin-bottom: 10px;
+  }
+  .dpr-item-head{
+    display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+  }
+  .dpr-item-head .ix{
+    width: 22px; height: 22px; border-radius: 4px; flex: 0 0 22px;
+    background: var(--blue); color: #fff; display: grid; place-items: center;
+    font-size: 11px; font-weight: 700;
+  }
+  .dpr-item-head .calc{
+    margin-left: auto; font-size: 12px; color: var(--gold-soft);
+    font-variant-numeric: tabular-nums; font-weight: 600;
+  }
+  .dpr-calc-row{
+    display: grid; gap: 8px; align-items: end;
+    grid-template-columns: 1fr 70px 80px 70px 80px 1.2fr;
+  }
+  .dpr-calc-row .op{
+    text-align: center; color: var(--text-3); font-weight: 700; padding-bottom: 10px;
+  }
+  .grp-total{
+    margin-top: 14px; padding: 12px 16px;
+    background: linear-gradient(135deg, rgba(200,169,81,.16), rgba(200,169,81,.04));
+    border: 1px solid rgba(200,169,81,.5); border-radius: var(--radius-sm);
+    display: flex; align-items: center; gap: 14px;
+  }
+  .grp-total .lbl{ font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--text-2); }
+  .grp-total .amt{ margin-left: auto; font-size: 18px; font-weight: 700; color: var(--gold-soft); font-variant-numeric: tabular-nums; }
+  .grp-total .terb{ flex-basis: 100%; font-size: 12px; color: var(--text-3); font-style: italic; }
+  @media (max-width: 900px){
+    .dpr-calc-row{ grid-template-columns: 1fr 1fr; }
+    .dpr-calc-row .op{ display: none; }
+  }
+
+  /* ============================================================
+     BUTTONS
+     ============================================================ */
+  .btn{
+    appearance: none; border: 1px solid transparent;
+    padding: 10px 16px; border-radius: var(--radius-sm);
+    cursor: pointer; font-weight: 600; font-size: 13px;
+    letter-spacing: .04em;
+    display: inline-flex; align-items: center; gap: 8px;
+    transition: transform .05s, background .15s, border-color .15s, box-shadow .15s;
+    white-space: nowrap;
+  }
+  .btn:active{ transform: translateY(1px); }
+  .btn-primary{
+    background: linear-gradient(180deg, var(--gold) 0%, var(--gold-2) 100%);
+    color: #1A1305;
+    box-shadow: 0 2px 0 rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.3);
+  }
+  .btn-primary:hover{ filter: brightness(1.05); }
+  .btn-print{
+    background: var(--blue); color: #fff;
+    border-color: var(--blue-2);
+  }
+  .btn-print:hover{ background: var(--blue-2); }
+  .btn-ghost{
+    background: transparent; color: var(--text);
+    border-color: var(--border-2);
+  }
+  .btn-ghost:hover{ background: rgba(255,255,255,.04); border-color: var(--gold); color: var(--gold-soft); }
+  .btn-danger{
+    background: transparent; color: var(--danger);
+    border-color: rgba(229,72,77,.4);
+  }
+  .btn-danger:hover{ background: rgba(229,72,77,.1); }
+  .btn-sm{ padding: 6px 10px; font-size: 12px; }
+  .btn-icon{ padding: 6px 8px; }
+
+  .actions-bar{
+    position: sticky; bottom: 0;
+    margin: 0 -28px -48px;
+    padding: 14px 28px;
+    background: linear-gradient(180deg, transparent, rgba(10,22,40,.92) 40%);
+    backdrop-filter: blur(8px);
+    border-top: 1px solid var(--border);
+    display: flex; gap: 10px; flex-wrap: wrap;
+    z-index: 5;
+  }
+  .actions-bar .spacer{ flex: 1; }
+
+  .add-btn{
+    width: 100%; padding: 14px;
+    border: 1.5px dashed var(--border-2);
+    background: transparent;
+    color: var(--text-2);
+    border-radius: var(--radius);
+    cursor: pointer; font-weight: 600;
+    letter-spacing: .1em; text-transform: uppercase; font-size: 12px;
+    transition: color .15s, border-color .15s, background .15s;
+  }
+  .add-btn:hover{ color: var(--gold); border-color: var(--gold); background: rgba(200,169,81,.05); }
+  .add-btn:disabled{ opacity: .4; cursor: not-allowed; }
+
+  /* DPR PIC preview pane */
+  .preview-shell{
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    box-shadow: var(--shadow);
+  }
+  .preview-shell .preview-bar{
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 18px; padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .preview-shell .preview-bar h2{
+    margin: 0; font-size: 13px; letter-spacing: .16em; text-transform: uppercase;
+  }
+  .preview-shell .preview-bar .spacer{ flex: 1; }
+  .paper{
+    background: #fff; color: #111;
+    padding: 22mm 18mm;
+    margin: 0 auto;
+    width: 210mm; min-height: 297mm;
+    font-family: 'Times New Roman', Georgia, serif;
+    font-size: 11pt; line-height: 1.4;
+    box-shadow: 0 8px 30px rgba(0,0,0,.45);
+  }
+  .paper-stack{
+    display: flex; flex-direction: column;
+    gap: 28px; align-items: center;
+  }
+  .paper-stack .paper{ margin: 0; }
+  .paper-page-label{
+    align-self: center; margin: 0 auto;
+    font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--text-3); font-weight: 600;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .paper-page-label::before, .paper-page-label::after{
+    content: ""; width: 40px; height: 1px; background: var(--border-2);
+  }
+
+  /* Toast */
+  .toast{
+    position: fixed; bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--card); color: var(--text);
+    border: 1px solid var(--gold);
+    padding: 10px 18px; border-radius: 999px;
+    box-shadow: var(--shadow);
+    opacity: 0; pointer-events: none;
+    transition: opacity .2s, transform .2s;
+    z-index: 100; font-size: 13px;
+  }
+  .toast.show{ opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* Modal */
+  .modal-overlay{
+    position: fixed; inset: 0; background: rgba(0,0,0,.6);
+    display: none; align-items: center; justify-content: center; z-index: 200;
+  }
+  .modal-overlay.show{ display: flex; }
+  .modal{
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 24px;
+    width: min(440px, 90vw);
+    box-shadow: var(--shadow);
+  }
+  .modal h3{ margin: 0 0 8px; }
+  .modal p{ color: var(--text-2); margin: 0 0 18px; }
+  .modal .modal-actions{ display: flex; justify-content: flex-end; gap: 10px; }
+
+  /* ============================================================
+     PRINT SHEETS (hidden on screen, shown on print)
+     ============================================================ */
+  .print-root{ display: none; }
+
+  /* ============================================================
+     PRINT STYLES
+     ============================================================ */
+  @page{ size: A4 portrait; margin: 18mm 16mm; }
+  @media print{
+    html, body {
+      height: auto !important;
+      overflow: visible !important;
+    }
+    body{ background: #fff; color: #000; font-family: 'Times New Roman', Georgia, serif; font-size: 11pt; }
+    .app{ display: none !important; }
+    .print-root{ display: block !important; }
+    .toast, .modal-overlay{ display: none !important; }
+  }
+
+  /* Mobile Print Preview styles */
+  #print-preview-modal-body .sheet {
+    background: #fff;
+    color: #111;
+    padding: 20mm 15mm;
+    margin: 10px auto;
+    width: 210mm;
+    min-height: 297mm;
+    font-family: 'Times New Roman', Georgia, serif;
+    font-size: 11pt;
+    line-height: 1.4;
+    box-shadow: 0 4px 15px rgba(0,0,0,.45);
+    box-sizing: border-box;
+    page-break-after: always;
+  }
+  #print-preview-modal-body .sheet.landscape {
+    width: 297mm;
+    min-height: 210mm;
+  }
+  #print-preview-modal-body .sheet:last-child {
+    page-break-after: auto;
+  }
+  
+  @media (max-width: 768px) {
+    #print-preview-modal-body {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 15px;
+    }
+    #print-preview-modal-body .sheet {
+      margin: 0;
+    }
+  }
+
+  /* ============================================================
+     PRINT SHEET LAYOUT (used in screen preview AND print)
+     ============================================================ */
+  .sheet{
+    font-family: 'Times New Roman', Georgia, serif;
+    color: #000;
+    page-break-after: always;
+  }
+  .sheet:last-child{ page-break-after: auto; }
+  .kop{
+    text-align: center;
+    border-bottom: 3px double #000;
+    padding-bottom: 8px; margin-bottom: 14px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .kop .kop-logo{
+    width: 84px; height: 84px; flex: 0 0 84px;
+    object-fit: contain;
+  }
+  .kop .kop-text{ flex: 1; text-align: center; }
+  .kop .kop-text .l1{ font-size: 11pt; font-weight: 700; }
+  .kop .kop-text .l2{ font-size: 11pt; font-weight: 700; }
+  .kop .kop-text .l3{ font-size: 11pt; font-weight: 700; }
+  .kop .kop-text .l4{ font-size: 13pt; font-weight: 700; letter-spacing: .02em; }
+  .kop .kop-text .l5{ font-size: 10pt; margin-top: 2px; }
+  .kop .kop-text .l6{ font-size: 9pt; }
+  .kop-pad{ width: 84px; flex: 0 0 84px; } /* balance */
+
+  .doc-title{
+    text-align: center; font-weight: 700;
+    text-decoration: underline;
+    margin: 12px 0 4px;
+    font-size: 12pt;
+  }
+  .doc-subtitle{
+    text-align: center; font-size: 11pt; margin-bottom: 12px;
+  }
+
+  .doc-table{
+    width: 100%; border-collapse: collapse; font-size: 10pt;
+  }
+  .doc-table th, .doc-table td{
+    border: 1px solid #000; padding: 4px 6px; vertical-align: top;
+  }
+  .doc-table th{ background: #EEE; font-weight: 700; text-align: center; }
+  .num{ text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .ctr{ text-align: center; }
+  .ttd-cell{ text-align: left; vertical-align: top; padding: 4px 6px; height: 56px; }
+
+  .ttd-grid{
+    display: grid; grid-template-columns: 1fr 1fr; gap: 28px;
+    margin-top: 28px; page-break-inside: avoid;
+  }
+  .ttd{ text-align: center; }
+  .ttd .role{ font-weight: 400; margin-bottom: 64px; }
+  .ttd .name{ font-weight: 700; text-decoration: underline; }
+  .ttd .nip{ font-weight: 400; }
+
+  .terbilang{ font-style: italic; }
+
+  /* Landscape sheet (Nominatif) */
+  .sheet.landscape{ /* handled via page rule below */ }
+  @media print{
+    .sheet.landscape{ page: landscape; }
+  }
+  @page landscape{ size: A4 landscape; margin: 12mm 10mm; }
+
+  /* Footer responsiveness */
+  @media (max-width: 900px){
+    .g-3, .g-4, .g-6{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .col-3, .col-4, .col-6{ grid-column: span 2; }
+    .pegawai-totals{ grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     SCREEN APP
+     ============================================================ -->
+<div class="app" id="app">
+
+  <header class="topbar">
+    <img class="crest" src="4e9b82d6-5ca9-4f6b-bdcc-22ba73f2ca1b" alt="Logo Imigrasi">
+    <div class="titles">
+      <h1>SISTEM <span class="accent">RINCIAN SPD</span></h1>
+      <div class="sub">Imigrasi 2026 · Kantor Imigrasi Kelas I TPI Pontianak</div>
+    </div>
+    <div class="meta">
+      <div>TAHUN ANGGARAN <strong>2026</strong></div>
+      <div>v 1.0</div>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab active" data-tab="pengisian" role="tab"><span class="dot"></span>Pengisian</button>
+    <button class="tab" data-tab="dpr" role="tab"><span class="dot"></span>DPR PIC</button>
+  </nav>
+
+  <main class="main">
+
+    <!-- ========== VIEW: PENGISIAN ========== -->
+    <section class="view active" id="view-pengisian">
+
+      <!-- Section A: Data Kegiatan -->
+      <div class="section">
+        <div class="section-head">
+          <div class="num">A</div>
+          <h2>Data Kegiatan · Header SPD</h2>
+          <div class="hint">Wajib dilengkapi sebelum cetak</div>
+        </div>
+        <div class="section-body">
+          <div class="grid g-6">
+            <div class="field col-6">
+              <label>Judul Kegiatan <span class="req">*</span></label>
+              <textarea data-h="judulKegiatan" rows="2" placeholder="MELAKUKAN KEGIATAN KOORDINASI TERKAIT…"></textarea>
+            </div>
+
+            <div class="field col-2">
+              <label>Nomor SPT <span class="req">*</span></label>
+              <input data-h="nomorSPT" type="text" placeholder="WIM.16.IMI.1-TI.04.01-…">
+            </div>
+            <div class="field col-2">
+              <label>Tanggal SPT</label>
+              <input data-h="tanggalSPT" type="date">
+            </div>
+            <div class="field col-2">
+              <label>Tujuan Kota</label>
+              <input data-h="tujuanKota" type="text" placeholder="Jakarta">
+            </div>
+
+            <div class="field col-3">
+              <label>Nama Program</label>
+              <input data-h="namaProgram" type="text" placeholder="Pengelolaan Teknologi Informasi Keimigrasian">
+            </div>
+            <div class="field col-3">
+              <label>Tanggal Kegiatan (teks bebas)</label>
+              <input data-h="tanggalKegiatan" type="text" placeholder="6 sd 8 Mei 2026">
+            </div>
+
+            <div class="field col-3">
+              <label>Pejabat Pembuat Komitmen (PPK)</label>
+              <input data-h="namaPPK" type="text" list="dl-pegawai-nama" placeholder="Nama lengkap PPK">
+            </div>
+            <div class="field col-2">
+              <label>NIP PPK</label>
+              <input data-h="nipPPK" type="text">
+            </div>
+            <div class="field col-1" style="grid-column: span 1;">
+              <label>Kota Terbit</label>
+              <input data-h="kotaTerbit" type="text" placeholder="Pontianak" value="Pontianak">
+            </div>
+
+            <div class="field col-6">
+              <label>Jabatan PPK</label>
+              <input data-h="jabatanPPK" type="text">
+            </div>
+
+            <div class="field col-3">
+              <label>Bendahara Pengeluaran</label>
+              <input data-h="namaBendahara" type="text" list="dl-pegawai-nama">
+            </div>
+            <div class="field col-2">
+              <label>NIP Bendahara</label>
+              <input data-h="nipBendahara" type="text">
+            </div>
+            <div class="field" style="grid-column: span 1;">
+              <label>Kode Anggaran</label>
+              <input data-h="kodeAnggaran" type="text" placeholder="opsional">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section B: Daftar Pegawai -->
+      <div class="section">
+        <div class="section-head">
+          <div class="num">B</div>
+          <h2>Daftar Pegawai SPD</h2>
+          <div class="hint"><span id="pegawai-count">0</span> / 10 pegawai</div>
+        </div>
+        <div class="section-body">
+          <div id="pegawai-list"></div>
+          <button class="add-btn" id="btn-add-pegawai">+ Tambah Pegawai</button>
+        </div>
+      </div>
+
+      <!-- Action bar -->
+      <div class="actions-bar">
+        <button class="btn btn-primary" id="btn-save">💾 Simpan Data</button>
+        <button class="btn btn-print" id="btn-print-nominatif">🖨️ Cetak Nominatif</button>
+        <button class="btn btn-print" id="btn-print-dpr">🖨️ Cetak DPR PIC</button>
+        <button class="btn btn-print" id="btn-print-all">🖨️ Cetak Rincian SPD Semua</button>
+        <div class="spacer"></div>
+        <button class="btn btn-ghost" id="btn-loadexample">⤴ Muat Contoh</button>
+        <button class="btn btn-danger" id="btn-reset">🗑️ Reset Form</button>
+      </div>
+    </section>
+
+    <!-- ========== VIEW: DPR PIC ========== -->
+    <section class="view" id="view-dpr">
+
+      <!-- Penandatangan -->
+      <div class="section">
+        <div class="section-head">
+          <div class="num">P</div>
+          <h2>Penandatangan &amp; Dasar Surat</h2>
+          <div class="hint">Default mengikuti data PPK</div>
+        </div>
+        <div class="section-body">
+          <div class="grid g-6">
+            <div class="field col-3">
+              <label>Nama Penandatangan <span class="req">*</span></label>
+              <input data-d="namaTtd" type="text" list="dl-pegawai-nama">
+            </div>
+            <div class="field col-2">
+              <label>NIP</label>
+              <input data-d="nipTtd" type="text">
+            </div>
+            <div class="field" style="grid-column: span 1;">
+              <label>Kota Terbit</label>
+              <input data-d="kotaTtd" type="text" value="Pontianak">
+            </div>
+            <div class="field col-3">
+              <label>Jabatan</label>
+              <input data-d="jabatanTtd" type="text">
+            </div>
+            <div class="field col-2">
+              <label>Tanggal Surat Perintah</label>
+              <input data-d="tanggalSurat" type="date">
+            </div>
+            <div class="field" style="grid-column: span 1;">
+              <label>Tanggal Cetak</label>
+              <input data-d="tanggalCetak" type="date">
+            </div>
+            <div class="field col-3">
+              <label>Nomor Surat Perintah</label>
+              <input data-d="nomorSurat" type="text" placeholder="WIM.16.IMI.1-TI.04.01-2438">
+            </div>
+            <div class="field col-3">
+              <label>Nama Penerima (kolom kanan TTD)</label>
+              <input data-d="namaPenerima" type="text" list="dl-pegawai-nama">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FORM 1: Uang Harian -->
+      <div class="section" data-grp="g1">
+        <div class="section-head">
+          <div class="num" style="background:var(--blue); color:#fff;">1</div>
+          <h2>Form 1 · Uang Harian</h2>
+          <div class="hint">Belanja Barang Non Operasional</div>
+        </div>
+        <div class="section-body">
+          <div class="grid g-6" style="margin-bottom:16px;">
+            <div class="field col-3">
+              <label>Baris Program 1</label>
+              <input data-g="g1" data-gk="baris1" type="text" placeholder="OPERASI INTELIJEN DI WILAYAH">
+            </div>
+            <div class="field col-3">
+              <label>Baris Program 2</label>
+              <input data-g="g1" data-gk="baris2" type="text" placeholder="PENGUMPULAN DATA DAN INFORMASI">
+            </div>
+            <div class="field col-4">
+              <label>Kategori Belanja</label>
+              <input data-g="g1" data-gk="kategori" type="text" placeholder="BELANJA BARANG NON OPERASIONAL LAINNYA">
+            </div>
+            <div class="field col-2">
+              <label>Kode Anggaran</label>
+              <input data-g="g1" data-gk="kode" type="text" placeholder="(6161.BHB.U12.051.A.521219)">
+            </div>
+          </div>
+          <div class="dpr-items" data-items="g1"></div>
+          <button class="add-btn" data-additem="g1">+ Tambah Rincian Biaya</button>
+          <div class="grp-total" data-grptotal="g1"></div>
+        </div>
+      </div>
+
+      <!-- FORM 2: Pengeluaran Lainnya -->
+      <div class="section" data-grp="g2">
+        <div class="section-head">
+          <div class="num" style="background:var(--blue); color:#fff;">2</div>
+          <h2>Form 2 · Pengeluaran Lainnya</h2>
+          <div class="hint">Belanja Sewa / lainnya</div>
+        </div>
+        <div class="section-body">
+          <div class="grid g-6" style="margin-bottom:16px;">
+            <div class="field col-3">
+              <label>Baris Program 1</label>
+              <input data-g="g2" data-gk="baris1" type="text" placeholder="OPERASI INTELIJEN DI WILAYAH">
+            </div>
+            <div class="field col-3">
+              <label>Baris Program 2</label>
+              <input data-g="g2" data-gk="baris2" type="text" placeholder="PENGUMPULAN DATA DAN INFORMASI">
+            </div>
+            <div class="field col-4">
+              <label>Kategori Belanja</label>
+              <input data-g="g2" data-gk="kategori" type="text" placeholder="BELANJA SEWA">
+            </div>
+            <div class="field col-2">
+              <label>Kode Anggaran</label>
+              <input data-g="g2" data-gk="kode" type="text" placeholder="(6161.BHB.U12.051.A.522141)">
+            </div>
+          </div>
+          <div class="dpr-items" data-items="g2"></div>
+          <button class="add-btn" data-additem="g2">+ Tambah Rincian Biaya</button>
+          <div class="grp-total" data-grptotal="g2"></div>
+        </div>
+      </div>
+
+      <!-- DPR action bar -->
+      <div class="actions-bar">
+        <button class="btn btn-primary" id="btn-dpr-save">💾 Simpan Data</button>
+        <button class="btn btn-print" id="btn-dpr-print1">🖨️ Cetak Form 1 (Uang Harian)</button>
+        <button class="btn btn-print" id="btn-dpr-print2">🖨️ Cetak Form 2 (Lainnya)</button>
+        <button class="btn btn-print" id="btn-dpr-printall">🖨️ Cetak Keduanya</button>
+        <div class="spacer"></div>
+        <button class="btn btn-ghost" id="btn-dpr-preview">👁️ Preview</button>
+        <button class="btn btn-ghost" id="btn-dpr-fromppk">⤴ Isi dari PPK</button>
+      </div>
+
+      <!-- Preview pane (toggle) -->
+      <div class="preview-shell" id="dpr-preview-shell" style="display:none; margin-top:20px;">
+        <div class="preview-bar">
+          <h2>Preview Cetak</h2>
+          <div class="spacer"></div>
+          <button class="btn btn-ghost" id="btn-dpr-preview-close">✕ Tutup Preview</button>
+        </div>
+        <div class="paper-stack" id="dpr-paper"></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ============================================================
+     PRINT-ONLY ROOT
+     ============================================================ -->
+<div class="print-root" id="print-root"></div>
+
+<!-- Toast & Modal -->
+<div class="toast" id="toast"></div>
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3 id="modal-title">Konfirmasi</h3>
+    <p id="modal-body">Anda yakin?</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="modal-cancel">Batal</button>
+      <button class="btn btn-danger" id="modal-ok">Hapus</button>
+    </div>
+  </div>
+</div>
+
+<!-- Print Preview Modal (mobile-friendly) -->
+<style>
+  #print-preview-overlay {
+    position: fixed; inset: 0; z-index: 9000;
+    background: rgba(5, 12, 26, 0.92);
+    backdrop-filter: blur(8px);
+    display: none; flex-direction: column;
+    overflow: hidden;
+  }
+  #print-preview-overlay.open { display: flex; }
+  #print-preview-header {
+    flex: 0 0 auto;
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 20px;
+    background: linear-gradient(180deg, #0E2245 0%, #0A1B36 100%);
+    border-bottom: 1px solid #1E3A5F;
+  }
+  #print-preview-header h2 {
+    margin: 0; font-size: 14px; letter-spacing: .12em;
+    text-transform: uppercase; color: #E8F0FE;
+    flex: 1;
+  }
+  #print-preview-header .pphint {
+    font-size: 11px; color: #8BA7C7; letter-spacing: .06em;
+  }
+  #print-preview-body-wrap {
+    flex: 1; overflow-y: auto;
+    padding: 24px 16px 48px;
+    display: flex; flex-direction: column; align-items: center; gap: 20px;
+    background: #07111f;
+  }
+  #print-preview-body-wrap .sheet {
+    background: #fff;
+    color: #111;
+    padding: 18mm 14mm;
+    width: 210mm;
+    min-height: 297mm;
+    font-family: 'Times New Roman', Georgia, serif;
+    font-size: 11pt;
+    line-height: 1.4;
+    box-shadow: 0 8px 32px rgba(0,0,0,.6);
+    box-sizing: border-box;
+    page-break-after: always;
+    flex: 0 0 auto;
+  }
+  #print-preview-body-wrap .sheet.landscape {
+    width: 297mm;
+    min-height: 210mm;
+  }
+  #print-preview-body-wrap .sheet:last-child {
+    page-break-after: auto;
+  }
+  #print-preview-footer {
+    flex: 0 0 auto;
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 20px;
+    background: linear-gradient(0deg, #0E2245 0%, #0A1B36 100%);
+    border-top: 1px solid #1E3A5F;
+  }
+  #print-preview-footer .spacer { flex: 1; }
+  #btn-pp-close {
+    background: transparent; color: #8BA7C7;
+    border: 1px solid #1E3A5F; border-radius: 6px;
+    padding: 10px 16px; font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: color .15s, border-color .15s;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  #btn-pp-close:hover { color: #E8F0FE; border-color: #2A4A6F; }
+  #btn-pp-print {
+    background: linear-gradient(180deg, #1A6EBD 0%, #1558A0 100%);
+    color: #fff; border: 1px solid #1558A0;
+    border-radius: 6px; padding: 11px 22px;
+    font-size: 13px; font-weight: 700;
+    cursor: pointer; letter-spacing: .06em;
+    display: inline-flex; align-items: center; gap: 8px;
+    box-shadow: 0 2px 0 rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.15);
+    transition: filter .15s;
+  }
+  #btn-pp-print:hover { filter: brightness(1.1); }
+  #btn-pp-print:active { transform: translateY(1px); }
+  @media print {
+    #print-preview-overlay { display: none !important; }
+  }
+</style>
+<div id="print-preview-overlay">
+  <div id="print-preview-header">
+    <h2>🖨️ Preview Cetak</h2>
+    <span class="pphint">Gulir ke bawah untuk melihat semua halaman</span>
+  </div>
+  <div id="print-preview-body-wrap"></div>
+  <div id="print-preview-footer">
+    <button id="btn-pp-close">✕ Tutup</button>
+    <div class="spacer"></div>
+    <button id="btn-pp-print">🖨️ Cetak / Simpan PDF</button>
+  </div>
+</div>
+
+<!-- Datalist sumber autocomplete -->
+<datalist id="dl-pegawai-nama"></datalist>
+
+<script>
+/* ================================================================
+   DATA SUMBER — Daftar Pegawai (hardcoded)
+   ================================================================ */
+const daftarPegawai = [
+  { nama:"MOKHAMAD REZA SULAEMAN, A.Md.Im., S.IP.", nip:"19800921 200112 1 001", pangkat:"PENATA TK. I / (III/d)", jabatan:"PLT. KEPALA RUDENIM PONTIANAK" },
+  { nama:"ITA ANGGRIANI, S.H.", nip:"19721013 199203 2 001", pangkat:"PENATA TK. I / (III/d)", jabatan:"KEPALA SUB BAGIAN TATA USAHA" },
+  { nama:"FAJAR DWI PRASETYO, A.Md.,S.Kom", nip:"19800913 200901 1 008", pangkat:"PENATA TK. I / (III/d)", jabatan:"KASI KEAMANAN DAN KETERTIBAN" },
+  { nama:"MUHAMMAD REZA, S.H.", nip:"19840124 200212 1 002", pangkat:"PENATA / (III/c)", jabatan:"KASI PERAWATAN DAN KESEHATAN" },
+  { nama:"SYECH MUKHAMAR REZA KHARAMI, S.H.", nip:"19840831 200312 1 001", pangkat:"PENATA / (III/c)", jabatan:"KASI REG, ADMINISTRASI & PELAPORAN" },
+  { nama:"FREDERICK A. RUHUPATTY, S.S.", nip:"19770401 200912 1 002", pangkat:"PENATA TK. I / (III/d)", jabatan:"KEPALA URUSAN UMUM" },
+  { nama:"SAULINA SIMORANGKIR, S.S.", nip:"19800803 200912 2 001", pangkat:"PENATA TK. I / (III/d)", jabatan:"KASUBSI REGISTRASI" },
+  { nama:"YAKUB SAPUTRA SIMANJUNTAK, S.P.", nip:"19830521 200604 1 001", pangkat:"PENATA TK. I / (III/d)", jabatan:"KASUBSI KETERTIBAN" },
+  { nama:"FITRIADI TULUS", nip:"19680516 199003 1 003", pangkat:"PENATA MUDA Tk. I / (III/b)", jabatan:"KASUBSI ADMINISTRASI DAN PELAPORAN" },
+  { nama:"TARMUJI", nip:"19680727 199103 1 002", pangkat:"PENATA MUDA Tk. I / (III/b)", jabatan:"KASUBSI KESEHATAN" },
+  { nama:"HARYANTO", nip:"19711104 199103 1 001", pangkat:"PENATA MUDA Tk. I / (III/b)", jabatan:"KASUBSI PERAWATAN" },
+  { nama:"TEDY SUMPONO", nip:"19810907 200501 1 001", pangkat:"PENATA MUDA TK. I / (III/b)", jabatan:"KASUBSI KEAMANAN" },
+  { nama:"HARDIAN RAMADHANA SESTYANTO, S.H.", nip:"19880425 201212 1 003", pangkat:"PENATA MUDA TK. I / (III/b)", jabatan:"KAUR KEUANGAN" },
+  { nama:"GORGA ARISANDY SIREGAR, S.Kom.", nip:"19920703 201712 1 001", pangkat:"PENATA MUDA TK. I / (III/b)", jabatan:"KAUR KEPEGAWAIAN" },
+  { nama:"IRWANSYAH, S.H.", nip:"19701017 199703 1 001", pangkat:"PENATA TK. I / (III/d)", jabatan:"PENYUSUN LAPORAN DAN HASIL EVALUASI" },
+  { nama:"MUHAMMAD IQBAL, A.Md.Im., S.H., M.Si.", nip:"19840930 200312 1 002", pangkat:"PENATA TK. I / (III/d)", jabatan:"ANALIS PENGELOLAAN KEUANGAN APBN AHLI MUDA" },
+  { nama:"AGUS DINARIA, S.H.", nip:"19870806 200604 2 001", pangkat:"PENATA TK. I / (III/d)", jabatan:"PENYUSUN RENCANA KERJA & ANGGARAN" },
+  { nama:"WIRA PRATAMA ELVIRA PUTRI, S.ST.", nip:"19871207 200903 2 003", pangkat:"PENATA TK. I / (III/d)", jabatan:"PENGOLAH DATA KESEHATAN" },
+  { nama:"MUHAMMAD FAJAR WAHYUDI, A.Md.", nip:"19831005 200901 1 015", pangkat:"PENATA / (III/c)", jabatan:"PENGELOLA DATA KEAMANAN DAN KETERTIBAN" },
+  { nama:"HILMAN FIRDAUS, S.Kom.", nip:"19870306 200901 1 002", pangkat:"PENATA / (III/c)", jabatan:"PENYUSUN LAPORAN DAN HASIL EVALUASI" },
+  { nama:"M. IRWANTO RAHMAWAN", nip:"19760108 200112 1 001", pangkat:"PENATA MUDA Tk. I / (III/b)", jabatan:"PENGELOLA KEAMANAN DAN KETERTIBAN" },
+  { nama:"YUSDIAWAN", nip:"19770530 200212 1 001", pangkat:"PENATA MUDA Tk. I / (III/b)", jabatan:"PENGOLAH DATA LAPORAN KEAMANAN DAN KETERTIBAN" },
+  { nama:"GALIH NOFRIO NANDA, S.IP.", nip:"19841109 201712 1 001", pangkat:"PENATA MUDA Tk. I / (III/b)", jabatan:"ANALIS KEIMIGRASIAN PERTAMA" },
+  { nama:"CHANDRA HADINATA, S.E.", nip:"19910117 201503 1 004", pangkat:"PENATA MUDA TK. I / (III/b)", jabatan:"PENGELOLA DATA" },
+  { nama:"ARIANDI, S.H.", nip:"19880119 200801 1 001", pangkat:"PENATA MUDA / (III/a)", jabatan:"KOMANDAN JAGA PEMASYARAKATAN/KEIMIGRASIAN" },
+  { nama:"AGUNG SUPRABOWO, A.Md.Kep.", nip:"19900214 201503 1 006", pangkat:"PENATA MUDA / (III/a)", jabatan:"KOMANDAN JAGA PEMASYARAKATAN/KEIMIGRASIAN" },
+  { nama:"WAN RHOMA DONNY, A.Md.", nip:"19900420 201503 1 002", pangkat:"PENATA MUDA / (III/a)", jabatan:"PENGELOLA DATA KEPEGAWAIAN" },
+  { nama:"MOCHAMAD HENDRO TRIYONO, A.Md.", nip:"19900816 201503 1 003", pangkat:"PENATA MUDA / (III/a)", jabatan:"PENGOLAH DATA LAPORAN" },
+  { nama:"DEWA GEDE GUNA SUWASTAWA, A.Md.", nip:"19930822 201712 1 001", pangkat:"PENATA MUDA / (III/a)", jabatan:"PEMERIKSA KEIMIGRASIAN MAHIR" },
+  { nama:"JANUARTI TRI NINGSIH, S.H.", nip:"19940115 201212 2 001", pangkat:"PENATA MUDA / (III/a)", jabatan:"PENGOLAH BAHAN EVALUASI DAN PELAPORAN" }
+];
+
+/* ================================================================
+   STATE
+   ================================================================ */
+const STORAGE_KEY = "spd-imigrasi-2026";
+
+const defaultHeader = {
+  judulKegiatan: "",
+  nomorSPT: "",
+  tanggalSPT: "",
+  namaProgram: "",
+  tanggalKegiatan: "",
+  tujuanKota: "",
+  namaPPK: "",
+  nipPPK: "",
+  jabatanPPK: "",
+  namaBendahara: "",
+  nipBendahara: "",
+  kotaTerbit: "Pontianak",
+  kodeAnggaran: ""
+};
+
+const blankPegawai = () => ({
+  nama:"", nip:"", golongan:"III", jabatan:"", tujuan:"",
+  noSPD:"", tanggalSPD:"", tanggalPelaksanaan:"",
+  tglMulai:"", tglSelesai:"",
+  lamaHari:1, uangHarian:0,
+  maskapaiPergi:"", tiketPergi:0,
+  maskapaiPulang:"", tiketPulang:0,
+  taksi:0, taksiDaerah:0, transportKab:0,
+  penginapan:0, representasi:0,
+  rekening:"",
+  buktiTiket:"Bukti Terlampir",
+  buktiUangHarian:"Tidak Ada Bukti",
+  buktiPenginapan:"Bukti Terlampir",
+  buktiTaksi:"Bukti Terlampir",
+  buktiTaksiDaerah:"Bukti Terlampir",
+  buktiTransportKab:"Tidak Ada Bukti",
+  buktiRepresentasi:"Tidak Ada Bukti"
+});
+
+const defaultDPR = {
+  namaTtd:"", nipTtd:"", jabatanTtd:"", kotaTtd:"Pontianak",
+  tanggalSurat:"", tanggalCetak:"", nomorSurat:"", namaPenerima:"",
+  g1: {
+    baris1:"", baris2:"", kategori:"BELANJA BARANG NON OPERASIONAL LAINNYA", kode:"",
+    items:[ blankDPRItem() ]
+  },
+  g2: {
+    baris1:"", baris2:"", kategori:"BELANJA SEWA", kode:"",
+    items:[ blankDPRItem() ]
+  }
+};
+function blankDPRItem(){
+  return { uraian:"", qty1:1, sat1:"Org", qty2:1, sat2:"Hari", tarif:0, ket:"" };
+}
+
+const state = {
+  header: { ...defaultHeader },
+  pegawai: [ blankPegawai() ],
+  dpr: JSON.parse(JSON.stringify(defaultDPR))
+};
+
+/* ================================================================
+   UTILITIES
+   ================================================================ */
+function formatRupiah(n){
+  n = Number(n)||0;
+  return new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',minimumFractionDigits:0}).format(n);
+}
+
+function num(v){ const n = Number(v); return isFinite(n)?n:0; }
+
+const angkaSatuan = ["","SATU","DUA","TIGA","EMPAT","LIMA","ENAM","TUJUH","DELAPAN","SEMBILAN","SEPULUH","SEBELAS"];
+function terbilangCore(n){
+  n = Math.floor(Math.abs(n));
+  if (n < 12) return angkaSatuan[n];
+  if (n < 20) return terbilangCore(n-10) + " BELAS";
+  if (n < 100) return terbilangCore(Math.floor(n/10)) + " PULUH" + (n%10? " "+terbilangCore(n%10):"");
+  if (n < 200) return "SERATUS" + (n-100? " "+terbilangCore(n-100):"");
+  if (n < 1000) return terbilangCore(Math.floor(n/100)) + " RATUS" + (n%100? " "+terbilangCore(n%100):"");
+  if (n < 2000) return "SERIBU" + (n-1000? " "+terbilangCore(n-1000):"");
+  if (n < 1000000) return terbilangCore(Math.floor(n/1000)) + " RIBU" + (n%1000? " "+terbilangCore(n%1000):"");
+  if (n < 1000000000) return terbilangCore(Math.floor(n/1000000)) + " JUTA" + (n%1000000? " "+terbilangCore(n%1000000):"");
+  if (n < 1000000000000) return terbilangCore(Math.floor(n/1000000000)) + " MILIAR" + (n%1000000000? " "+terbilangCore(n%1000000000):"");
+  return terbilangCore(Math.floor(n/1000000000000)) + " TRILIUN" + (n%1000000000000? " "+terbilangCore(n%1000000000000):"");
+}
+function terbilang(n){
+  n = Number(n)||0;
+  if (n === 0) return "NOL RUPIAH";
+  return (terbilangCore(n).replace(/\s+/g," ").trim()) + " RUPIAH";
+}
+
+function lamaHariTeks(n){
+  n = Math.max(0, Math.floor(Number(n)||0));
+  const huruf = ["nol","satu","dua","tiga","empat","lima","enam","tujuh","delapan","sembilan","sepuluh","sebelas","dua belas","tiga belas","empat belas","lima belas"];
+  const t = huruf[n] || String(n);
+  return `${n} (${t}) hari`;
+}
+
+const bulanID = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+function formatTanggalID(tgl){
+  if (!tgl) return "";
+  // accept yyyy-mm-dd
+  const m = String(tgl).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return tgl;
+  const y = +m[1], mo = +m[2], d = +m[3];
+  return `${d} ${bulanID[mo-1]} ${y}`;
+}
+function parseTgl(tgl){
+  const m = String(tgl||"").match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return null;
+  return { y:+m[1], mo:+m[2], d:+m[3] };
+}
+function formatRangeID(mulai, selesai){
+  const a = parseTgl(mulai), b = parseTgl(selesai);
+  if (!a && !b) return "";
+  if (a && !b) return formatTanggalID(mulai);
+  if (!a && b) return formatTanggalID(selesai);
+  if (a.y===b.y && a.mo===b.mo) return `${a.d} sd ${b.d} ${bulanID[a.mo-1]} ${a.y}`;
+  if (a.y===b.y) return `${a.d} ${bulanID[a.mo-1]} sd ${b.d} ${bulanID[b.mo-1]} ${a.y}`;
+  return `${formatTanggalID(mulai)} sd ${formatTanggalID(selesai)}`;
+}
+function hitungLamaHari(mulai, selesai){
+  const a = parseTgl(mulai), b = parseTgl(selesai);
+  if (!a || !b) return null;
+  const da = new Date(a.y, a.mo-1, a.d), db = new Date(b.y, b.mo-1, b.d);
+  const diff = Math.round((db - da) / 86400000) + 1;
+  return diff > 0 ? diff : 1;
+}
+function tglPelaksanaanText(p){
+  const r = formatRangeID(p.tglMulai, p.tglSelesai);
+  return r || p.tanggalPelaksanaan || "";
+}
+
+function totalsForPegawai(p){
+  const tiketPP = num(p.tiketPergi) + num(p.tiketPulang);
+  const uangHarianTotal = num(p.uangHarian) * num(p.lamaHari);
+  const grand = tiketPP + num(p.taksi) + num(p.taksiDaerah) + num(p.transportKab) + uangHarianTotal + num(p.penginapan) + num(p.representasi);
+  return { tiketPP, uangHarianTotal, grand };
+}
+
+function totalsAll(){
+  let tiket=0, taksi=0, taksiDaerah=0, transport=0, uh=0, penginapan=0, repr=0, grand=0;
+  state.pegawai.forEach(p=>{
+    const t = totalsForPegawai(p);
+    tiket += t.tiketPP; taksi += num(p.taksi); taksiDaerah += num(p.taksiDaerah);
+    transport += num(p.transportKab); uh += t.uangHarianTotal;
+    penginapan += num(p.penginapan); repr += num(p.representasi); grand += t.grand;
+  });
+  return { tiket, taksi, taksiDaerah, transport, uh, penginapan, repr, grand };
+}
+
+/* ================================================================
+   STORAGE
+   ================================================================ */
+function save(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
+}
+function load(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    const obj = JSON.parse(raw);
+    if (obj && obj.header && Array.isArray(obj.pegawai)){
+      state.header = { ...defaultHeader, ...obj.header };
+      state.pegawai = obj.pegawai.length? obj.pegawai.map(p=>({...blankPegawai(),...p})) : [blankPegawai()];
+      if (obj.dpr){
+        const d = obj.dpr;
+        state.dpr = {
+          ...JSON.parse(JSON.stringify(defaultDPR)),
+          ...d,
+          g1: { ...defaultDPR.g1, ...(d.g1||{}), items: (d.g1&&d.g1.items&&d.g1.items.length)? d.g1.items.map(x=>({...blankDPRItem(),...x})) : [blankDPRItem()] },
+          g2: { ...defaultDPR.g2, ...(d.g2||{}), items: (d.g2&&d.g2.items&&d.g2.items.length)? d.g2.items.map(x=>({...blankDPRItem(),...x})) : [blankDPRItem()] }
+        };
+      }
+      return true;
+    }
+  }catch(e){}
+  return false;
+}
+
+/* ================================================================
+   TOAST + MODAL
+   ================================================================ */
+const toastEl = document.getElementById('toast');
+let toastTimer;
+function toast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>toastEl.classList.remove('show'), 2200);
+}
+
+const modalEl = document.getElementById('modal');
+function confirmModal({title, body, okText="Hapus", cancelText="Batal", danger=true}){
+  return new Promise(resolve=>{
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-body').textContent = body;
+    const ok = document.getElementById('modal-ok'); const cancel = document.getElementById('modal-cancel');
+    ok.textContent = okText; cancel.textContent = cancelText;
+    ok.className = "btn " + (danger?"btn-danger":"btn-primary");
+    modalEl.classList.add('show');
+    const cleanup = (val)=>{ modalEl.classList.remove('show'); ok.onclick=null; cancel.onclick=null; resolve(val); };
+    ok.onclick = ()=>cleanup(true);
+    cancel.onclick = ()=>cleanup(false);
+    modalEl.onclick = (e)=>{ if(e.target===modalEl) cleanup(false); };
+  });
+}
+
+/* ================================================================
+   TABS
+   ================================================================ */
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('view-'+t.dataset.tab).classList.add('active');
+    if (t.dataset.tab === 'dpr') renderDPR();
+  });
+});
+
+/* ================================================================
+   HEADER FORM BINDING
+   ================================================================ */
+function bindHeader(){
+  document.querySelectorAll('[data-h]').forEach(el=>{
+    const key = el.dataset.h;
+    el.value = state.header[key] ?? "";
+    el.addEventListener('input', ()=>{
+      state.header[key] = el.value;
+      // If PPK name matches a daftarPegawai entry, autofill NIP & Jabatan
+      if (key === 'namaPPK') autoFillPPK(el.value);
+      if (key === 'namaBendahara') autoFillBendahara(el.value);
+      save();
+      // refresh tujuan default for empty pegawai rows
+      if (key === 'tujuanKota'){ refreshPegawaiTujuanPlaceholders(); }
+    });
+  });
+}
+function autoFillPPK(name){
+  const m = daftarPegawai.find(p=>p.nama===name);
+  if (m){
+    state.header.nipPPK = m.nip;
+    state.header.jabatanPPK = m.jabatan;
+    document.querySelector('[data-h="nipPPK"]').value = m.nip;
+    document.querySelector('[data-h="jabatanPPK"]').value = m.jabatan;
+    save();
+  }
+}
+function autoFillBendahara(name){
+  const m = daftarPegawai.find(p=>p.nama===name);
+  if (m){
+    state.header.nipBendahara = m.nip;
+    document.querySelector('[data-h="nipBendahara"]').value = m.nip;
+    save();
+  }
+}
+function refreshPegawaiTujuanPlaceholders(){
+  document.querySelectorAll('[data-p-field="tujuan"]').forEach(inp=>{
+    inp.placeholder = state.header.tujuanKota || "Tujuan kota";
+  });
+}
+
+/* ================================================================
+   PEGAWAI LIST RENDER
+   ================================================================ */
+const peListEl = document.getElementById('pegawai-list');
+const peCountEl = document.getElementById('pegawai-count');
+
+function pegawaiRowHTML(i){
+  return `
+    <div class="pegawai-card" data-i="${i}">
+      <div class="pegawai-head">
+        <div class="badge">${i+1}</div>
+        <div class="name" data-role="name-display"><span class="placeholder">Pegawai baru — pilih nama</span></div>
+        <div class="actions">
+          <button class="btn btn-ghost btn-sm" data-act="print-one">🖨️ Cetak Rincian</button>
+          <button class="btn btn-danger btn-sm" data-act="remove">✕ Hapus</button>
+        </div>
+      </div>
+      <div class="pegawai-body">
+        <div class="grid g-6">
+          <div class="field col-3">
+            <label>Nama Lengkap <span class="req">*</span></label>
+            <input data-p-field="nama" type="text" list="dl-pegawai-nama" placeholder="Ketik atau pilih dari daftar" />
+          </div>
+          <div class="field col-2">
+            <label>NIP <span class="req">*</span></label>
+            <input data-p-field="nip" type="text" placeholder="auto-isi dari daftar" />
+          </div>
+          <div class="field">
+            <label>Golongan</label>
+            <select data-p-field="golongan">
+              <option value="II">II</option>
+              <option value="III" selected>III</option>
+              <option value="IV">IV</option>
+            </select>
+          </div>
+
+          <div class="field col-6">
+            <label>Jabatan</label>
+            <input data-p-field="jabatan" type="text" />
+          </div>
+
+          <div class="field col-2">
+            <label>Tujuan</label>
+            <input data-p-field="tujuan" type="text" />
+          </div>
+          <div class="field col-2">
+            <label>Nomor SPD <span class="req">*</span></label>
+            <input data-p-field="noSPD" type="text" placeholder="WIM.16.IMI.1-KU.03.01-…" />
+          </div>
+          <div class="field col-2">
+            <label>Tanggal SPD <span class="req">*</span></label>
+            <input data-p-field="tanggalSPD" type="date" />
+          </div>
+
+          <div class="field col-2">
+            <label>Tanggal Mulai</label>
+            <input data-p-field="tglMulai" type="date" />
+          </div>
+          <div class="field col-2">
+            <label>Tanggal Selesai</label>
+            <input data-p-field="tglSelesai" type="date" />
+          </div>
+          <div class="field">
+            <label>Lama Hari <span style="color:var(--text-3)">(auto)</span></label>
+            <input data-p-field="lamaHari" type="number" min="0" value="1" />
+          </div>
+          <div class="field col-2">
+            <label>Uang Harian (Rp/hari)</label>
+            <input data-p-field="uangHarian" type="number" min="0" step="1000" placeholder="530000" />
+          </div>
+
+          <div class="field col-3">
+            <label>Maskapai Pergi</label>
+            <input data-p-field="maskapaiPergi" type="text" placeholder="Batik Air (PNK - CGK)" />
+          </div>
+          <div class="field col-3">
+            <label>Harga Tiket Pergi (Rp)</label>
+            <input data-p-field="tiketPergi" type="number" min="0" step="1000" />
+          </div>
+
+          <div class="field col-3">
+            <label>Maskapai Pulang</label>
+            <input data-p-field="maskapaiPulang" type="text" placeholder="Citilink (CGK - PNK)" />
+          </div>
+          <div class="field col-3">
+            <label>Harga Tiket Pulang (Rp)</label>
+            <input data-p-field="tiketPulang" type="number" min="0" step="1000" />
+          </div>
+
+          <div class="field col-2">
+            <label>Taksi (Rp)</label>
+            <input data-p-field="taksi" type="number" min="0" step="1000" />
+          </div>
+          <div class="field col-2">
+            <label>Taksi Daerah (Rp)</label>
+            <input data-p-field="taksiDaerah" type="number" min="0" step="1000" />
+          </div>
+          <div class="field col-2">
+            <label>Transport Antar Kab/Kota (Rp)</label>
+            <input data-p-field="transportKab" type="number" min="0" step="1000" />
+          </div>
+
+          <div class="field col-2">
+            <label>Biaya Penginapan (Rp)</label>
+            <input data-p-field="penginapan" type="number" min="0" step="1000" />
+          </div>
+          <div class="field col-2">
+            <label>Uang Representasi (Rp)</label>
+            <input data-p-field="representasi" type="number" min="0" step="1000" />
+          </div>
+          <div class="field col-2">
+            <label>No. Rekening</label>
+            <input data-p-field="rekening" type="text" placeholder="BPG 042 …" />
+          </div>
+        </div>
+
+        <div class="bukti-block">
+          <div class="bukti-title">Status Bukti Pengeluaran</div>
+          <div class="grid g-4">
+            <div class="field">
+              <label>Tiket Pesawat</label>
+              <select data-p-field="buktiTiket" data-bukti>
+                <option>Bukti Terlampir</option><option>Tidak Ada Bukti</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Uang Harian</label>
+              <select data-p-field="buktiUangHarian" data-bukti>
+                <option>Bukti Terlampir</option><option>Tidak Ada Bukti</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Penginapan</label>
+              <select data-p-field="buktiPenginapan" data-bukti>
+                <option>Bukti Terlampir</option><option>Tidak Ada Bukti</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Taksi</label>
+              <select data-p-field="buktiTaksi" data-bukti>
+                <option>Bukti Terlampir</option><option>Tidak Ada Bukti</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Taksi Daerah</label>
+              <select data-p-field="buktiTaksiDaerah" data-bukti>
+                <option>Bukti Terlampir</option><option>Tidak Ada Bukti</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Transport Antar Kab/Kota</label>
+              <select data-p-field="buktiTransportKab" data-bukti>
+                <option>Bukti Terlampir</option><option>Tidak Ada Bukti</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Uang Representasi</label>
+              <select data-p-field="buktiRepresentasi" data-bukti>
+                <option>Bukti Terlampir</option><option>Tidak Ada Bukti</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="pegawai-totals" data-role="totals">
+          <div class="stat"><div class="k">Total Tiket PP</div><div class="v" data-t="tiket">Rp 0</div></div>
+          <div class="stat"><div class="k">Uang Harian × Lama</div><div class="v" data-t="uh">Rp 0</div></div>
+          <div class="stat"><div class="k">Lama Hari</div><div class="v" data-t="hari">0 hari</div></div>
+          <div class="stat total"><div class="k">Total Per Pegawai</div><div class="v" data-t="grand">Rp 0</div></div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function bindPegawaiCard(card, i){
+  const p = state.pegawai[i];
+  // populate values
+  card.querySelectorAll('[data-p-field]').forEach(inp=>{
+    const key = inp.dataset.pField;
+    inp.value = p[key] ?? "";
+  });
+  // tujuan placeholder/default
+  refreshPegawaiTujuanPlaceholders();
+
+  // input listeners
+  card.querySelectorAll('[data-p-field]').forEach(inp=>{
+    const key = inp.dataset.pField;
+    inp.addEventListener('input', ()=>{
+      let v = inp.value;
+      if (inp.type === 'number') v = inp.value === ""? 0 : Number(inp.value);
+      state.pegawai[i][key] = v;
+
+      // autofill from daftarPegawai
+      if (key === 'nama'){
+        const m = daftarPegawai.find(x=>x.nama===v);
+        if (m){
+          state.pegawai[i].nip = m.nip;
+          state.pegawai[i].jabatan = m.jabatan;
+          // golongan dari pangkat (III/d -> III, etc.)
+          const gMatch = m.pangkat.match(/\(([^)]+)\)/);
+          if (gMatch){
+            const g = gMatch[1].split('/')[0].trim();
+            state.pegawai[i].golongan = g;
+            card.querySelector('[data-p-field="golongan"]').value = g;
+          }
+          card.querySelector('[data-p-field="nip"]').value = m.nip;
+          card.querySelector('[data-p-field="jabatan"]').value = m.jabatan;
+        }
+      }
+      // default tujuan from header
+      if (key === 'tujuan' && v === "" && state.header.tujuanKota){
+        // leave placeholder
+      }
+      // auto-hitung lama hari dari rentang tanggal
+      if (key === 'tglMulai' || key === 'tglSelesai'){
+        const lh = hitungLamaHari(state.pegawai[i].tglMulai, state.pegawai[i].tglSelesai);
+        if (lh != null){
+          state.pegawai[i].lamaHari = lh;
+          const lhInput = card.querySelector('[data-p-field="lamaHari"]');
+          if (lhInput) lhInput.value = lh;
+        }
+      }
+      updateTotals(card, i);
+      updateNameDisplay(card, i);
+      save();
+    });
+  });
+
+  // action buttons
+  card.querySelector('[data-act="remove"]').addEventListener('click', async ()=>{
+    if (state.pegawai.length === 1){
+      toast("Minimal satu pegawai");
+      return;
+    }
+    const ok = await confirmModal({title:"Hapus pegawai?", body:`Pegawai #${i+1} akan dihapus.`, okText:"Hapus"});
+    if (ok){
+      state.pegawai.splice(i,1);
+      save();
+      renderAllPegawai();
+    }
+  });
+  card.querySelector('[data-act="print-one"]').addEventListener('click', ()=>printRincianOne(i));
+
+  updateTotals(card, i);
+  updateNameDisplay(card, i);
+}
+
+function updateTotals(card, i){
+  const p = state.pegawai[i];
+  const t = totalsForPegawai(p);
+  card.querySelector('[data-t="tiket"]').textContent = formatRupiah(t.tiketPP);
+  card.querySelector('[data-t="uh"]').textContent   = formatRupiah(t.uangHarianTotal);
+  card.querySelector('[data-t="hari"]').textContent = lamaHariTeks(p.lamaHari);
+  card.querySelector('[data-t="grand"]').textContent= formatRupiah(t.grand);
+}
+function updateNameDisplay(card, i){
+  const p = state.pegawai[i];
+  const el = card.querySelector('[data-role="name-display"]');
+  if (p.nama){
+    el.innerHTML = `${p.nama} <span style="color:var(--text-3); font-weight:500; margin-left:8px;">${p.nip||""}</span>`;
+  } else {
+    el.innerHTML = `<span class="placeholder">Pegawai baru — pilih nama</span>`;
+  }
+}
+
+function renderAllPegawai(){
+  peListEl.innerHTML = state.pegawai.map((_,i)=>pegawaiRowHTML(i)).join("");
+  peListEl.querySelectorAll('.pegawai-card').forEach((card,i)=>bindPegawaiCard(card,i));
+  peCountEl.textContent = state.pegawai.length;
+  document.getElementById('btn-add-pegawai').disabled = state.pegawai.length >= 10;
+}
+
+document.getElementById('btn-add-pegawai').addEventListener('click', ()=>{
+  if (state.pegawai.length >= 10){ toast("Maksimal 10 pegawai"); return; }
+  const p = blankPegawai();
+  // inherit defaults from header
+  if (state.header.tujuanKota) p.tujuan = state.header.tujuanKota;
+  state.pegawai.push(p);
+  save();
+  renderAllPegawai();
+});
+
+/* Populate datalist */
+function fillDatalist(){
+  const dl = document.getElementById('dl-pegawai-nama');
+  dl.innerHTML = daftarPegawai.map(p=>`<option value="${p.nama}">${p.jabatan}</option>`).join("");
+}
+
+/* ================================================================
+   ACTIONS BAR
+   ================================================================ */
+document.getElementById('btn-save').addEventListener('click', ()=>{
+  save();
+  toast("✓ Data tersimpan");
+});
+document.getElementById('btn-reset').addEventListener('click', async ()=>{
+  const ok = await confirmModal({title:"Reset form?", body:"Semua data form akan dikosongkan. Tindakan ini tidak bisa dibatalkan.", okText:"Reset"});
+  if (ok){
+    state.header = { ...defaultHeader };
+    state.pegawai = [ blankPegawai() ];
+    state.dpr = JSON.parse(JSON.stringify(defaultDPR));
+    save();
+    bindHeader();
+    renderAllPegawai();
+    renderDPR();
+    toast("Form direset");
+  }
+});
+document.getElementById('btn-loadexample').addEventListener('click', ()=>{
+  Object.assign(state.header, contohData.header);
+  state.pegawai = contohData.pegawai.map(p=>({...blankPegawai(),...p}));
+  if (contohData.dpr) state.dpr = JSON.parse(JSON.stringify(contohData.dpr));
+  save();
+  bindHeader();
+  renderAllPegawai();
+  renderDPR();
+  toast("Contoh data dimuat");
+});
+
+document.getElementById('btn-print-nominatif').addEventListener('click', ()=>printNominatif());
+document.getElementById('btn-print-dpr').addEventListener('click', ()=>{
+  // switch to DPR view + print both groups
+  document.querySelector('[data-tab="dpr"]').click();
+  setTimeout(printDPRBoth, 80);
+});
+document.getElementById('btn-print-all').addEventListener('click', ()=>printAllRincian());
+
+/* DPR PIC tab buttons */
+document.getElementById('btn-dpr-save').addEventListener('click', ()=>{ save(); toast("✓ Data DPR tersimpan"); });
+document.getElementById('btn-dpr-print1').addEventListener('click', ()=>printDPRGroup('g1'));
+document.getElementById('btn-dpr-print2').addEventListener('click', ()=>printDPRGroup('g2'));
+document.getElementById('btn-dpr-printall').addEventListener('click', printDPRBoth);
+document.getElementById('btn-dpr-fromppk').addEventListener('click', ()=>{
+  state.dpr.namaTtd = state.header.namaPPK;
+  state.dpr.nipTtd = state.header.nipPPK;
+  state.dpr.jabatanTtd = state.header.jabatanPPK;
+  state.dpr.kotaTtd = state.header.kotaTerbit || "Pontianak";
+  state.dpr.tanggalSurat = state.header.tanggalSPT;
+  state.dpr.nomorSurat = state.header.nomorSPT;
+  if (!state.dpr.namaPenerima) state.dpr.namaPenerima = state.header.namaPPK;
+  save(); bindDPRHeader(); toast("Data PPK disalin");
+});
+const dprPreviewShell = document.getElementById('dpr-preview-shell');
+document.getElementById('btn-dpr-preview').addEventListener('click', ()=>{
+  dprPreviewShell.style.display = dprPreviewShell.style.display==='none'? 'block':'none';
+  if (dprPreviewShell.style.display==='block') renderDPRPreview();
+});
+document.getElementById('btn-dpr-preview-close').addEventListener('click', ()=>{ dprPreviewShell.style.display='none'; });
+
+/* ================================================================
+   VALIDATION (mark required empty fields red)
+   ================================================================ */
+function validateBeforePrint(){
+  let bad = 0;
+  document.querySelectorAll('.field').forEach(f=>f.classList.remove('invalid'));
+  // header required
+  const reqHeader = ['judulKegiatan','nomorSPT','namaPPK','nipPPK'];
+  reqHeader.forEach(k=>{
+    if (!state.header[k]){
+      const el = document.querySelector(`[data-h="${k}"]`);
+      if (el) el.closest('.field').classList.add('invalid');
+      bad++;
+    }
+  });
+  // pegawai required
+  state.pegawai.forEach((p,i)=>{
+    ['nama','nip','noSPD','tanggalSPD'].forEach(k=>{
+      if (!p[k]){
+        const card = document.querySelector(`.pegawai-card[data-i="${i}"]`);
+        if (card){
+          const el = card.querySelector(`[data-p-field="${k}"]`);
+          if (el) el.closest('.field').classList.add('invalid');
+        }
+        bad++;
+      }
+    });
+  });
+  if (bad>0){
+    toast(`✗ ${bad} field wajib belum lengkap`);
+    return false;
+  }
+  return true;
+}
+
+/* ================================================================
+   PRINT — KOP & SHEETS
+   ================================================================ */
+function getLogoUrl(){
+  const crest = document.querySelector('.topbar .crest');
+  return crest && crest.src ? crest.src : '';
+}
+
+function kopHTML(){
+  const logoSrc = getLogoUrl();
+  return `
+    <div class="kop">
+      ${logoSrc ? `<img class="kop-logo" src="${logoSrc}" alt="Logo" />` : `<div class="kop-pad"></div>`}
+      <div class="kop-text">
+        <div class="l1">KEMENTERIAN IMIGRASI DAN PEMASYARAKATAN REPUBLIK INDONESIA</div>
+        <div class="l2">DIREKTORAT JENDERAL IMIGRASI</div>
+        <div class="l3">KANTOR WILAYAH KALIMANTAN BARAT</div>
+        <div class="l4">KANTOR IMIGRASI KELAS I TPI PONTIANAK</div>
+        <div class="l5">Jalan Letjen. Sutoyo No. 122 Pontianak 78121</div>
+        <div class="l6">Laman: www.pontianak.imigrasi.go.id &nbsp;|&nbsp; Surel: keuangan.kanimptk@gmail.com</div>
+      </div>
+      <div class="kop-pad"></div>
+    </div>
+  `;
+}
+
+function sheetNominatifHTML(){
+  const h = state.header;
+  const tot = totalsAll();
+  const rows = state.pegawai.map((p,i)=>{
+    const t = totalsForPegawai(p);
+    return `
+      <tr>
+        <td class="ctr">${i+1}</td>
+        <td><b>${p.nama||"—"}</b><br/>NIP. ${p.nip||"—"}</td>
+        <td class="ctr">${p.golongan||""}</td>
+        <td>${p.jabatan||""}</td>
+        <td>${p.tujuan||h.tujuanKota||""}</td>
+        <td>${tglPelaksanaanText(p)}</td>
+        <td class="num">${t.tiketPP? formatRupiah(t.tiketPP):"-"}</td>
+        <td class="num">${num(p.taksi)? formatRupiah(p.taksi):"-"}</td>
+        <td class="num">${num(p.taksiDaerah)? formatRupiah(p.taksiDaerah):"-"}</td>
+        <td class="num">${t.uangHarianTotal? formatRupiah(t.uangHarianTotal):"-"}</td>
+        <td class="num">${num(p.penginapan)? formatRupiah(p.penginapan):"-"}</td>
+        <td class="num"><b>${formatRupiah(t.grand)}</b></td>
+        <td style="font-size:9pt">${p.rekening||""}</td>
+        <td class="ttd-cell">${i+1}.</td>
+      </tr>
+    `;
+  }).join("");
+
+  return `
+    <div class="sheet landscape">
+      ${kopHTML()}
+      <div class="doc-title">DAFTAR NOMINATIF PEMBAYARAN PERJALANAN DINAS</div>
+      <div class="doc-subtitle">
+        <div>${h.judulKegiatan||"—"}</div>
+        <div style="margin-top:4px">Sesuai Surat Perintah Tugas Nomor: <b>${h.nomorSPT||"—"}</b> Tanggal: <b>${formatTanggalID(h.tanggalSPT)||"—"}</b></div>
+      </div>
+
+      <table class="doc-table">
+        <thead>
+          <tr>
+            <th rowspan="2" style="width:3%">No</th>
+            <th rowspan="2" style="width:13%">Nama / NIP</th>
+            <th rowspan="2" style="width:4%">Gol</th>
+            <th rowspan="2" style="width:11%">Jabatan</th>
+            <th rowspan="2" style="width:7%">Tujuan</th>
+            <th rowspan="2" style="width:7%">Tgl Pelaksanaan</th>
+            <th colspan="5">Biaya Perjalanan (Rp)</th>
+            <th rowspan="2" style="width:9%">Jumlah</th>
+            <th rowspan="2" style="width:8%">Rekening</th>
+            <th rowspan="2" style="width:10%">TTD</th>
+          </tr>
+          <tr>
+            <th>Tiket PP</th>
+            <th>Taksi</th>
+            <th>Taksi Daerah</th>
+            <th>Uang Harian</th>
+            <th>Penginapan</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows}
+          <tr>
+            <td colspan="6" class="ctr"><b>JUMLAH</b></td>
+            <td class="num"><b>${formatRupiah(tot.tiket)}</b></td>
+            <td class="num"><b>${formatRupiah(tot.taksi)}</b></td>
+            <td class="num"><b>${formatRupiah(tot.taksiDaerah)}</b></td>
+            <td class="num"><b>${formatRupiah(tot.uh)}</b></td>
+            <td class="num"><b>${formatRupiah(tot.penginapan)}</b></td>
+            <td class="num"><b>${formatRupiah(tot.grand)}</b></td>
+            <td colspan="2"></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div style="margin-top:8px; font-size:10pt;"><i>Terbilang: ${terbilang(tot.grand)}</i></div>
+
+      <div class="ttd-grid">
+        <div class="ttd">
+          <div>Mengetahui,</div>
+          <div class="role">Pejabat Pembuat Komitmen,</div>
+          <div class="name">${h.namaPPK||"—"}</div>
+          <div class="nip">NIP. ${h.nipPPK||"—"}</div>
+        </div>
+        <div class="ttd">
+          <div>${h.kotaTerbit||"Pontianak"}, ${formatTanggalID(h.tanggalSPT)||"—"}</div>
+          <div class="role">Bendahara Pengeluaran,</div>
+          <div class="name">${h.namaBendahara||"—"}</div>
+          <div class="nip">NIP. ${h.nipBendahara||"—"}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function dprGroupTotal(g){
+  return (g.items||[]).reduce((s,it)=>s + (num(it.qty1)||1)*(num(it.qty2)||1)*num(it.tarif), 0);
+}
+function dprItemJumlah(it){
+  return (num(it.qty1)||1)*(num(it.qty2)||1)*num(it.tarif);
+}
+
+function sheetDPRGroupHTML(groupKey){
+  const d = state.dpr;
+  const g = d[groupKey];
+  const total = dprGroupTotal(g);
+  const tglSurat = formatTanggalID(d.tanggalSurat) || "—";
+  const tglCetak = formatTanggalID(d.tanggalCetak || d.tanggalSurat) || "—";
+  const noLabel = (i)=> String(i+1).padStart(2,"0");
+
+  const rows = (g.items||[]).map((it,i)=>{
+    const j = dprItemJumlah(it);
+    const calc = `${num(it.qty1)||1} ${it.sat1||"Org"} × ${num(it.qty2)||1} ${it.sat2||"Hari"} × ${formatRupiah(it.tarif)}`;
+    return `
+      <tr>
+        <td class="ctr">${noLabel(i)}</td>
+        <td>
+          ${it.uraian||"—"}<br/>
+          <span style="color:#555; font-size:9pt">${calc}</span>
+        </td>
+        <td class="num">${formatRupiah(j)}</td>
+        <td style="font-size:9pt">${it.ket||""}</td>
+      </tr>
+    `;
+  }).join("");
+
+  const subtitleLines = [g.baris1, g.baris2, g.kategori].filter(Boolean)
+    .map(x=>`<div>${x}</div>`).join("");
+
+  return `
+    <div class="sheet">
+      ${kopHTML()}
+      <div class="doc-title">DAFTAR PENGELUARAN RIIL</div>
+      <div class="doc-subtitle">
+        ${subtitleLines}
+        ${g.kode?`<div>${g.kode}</div>`:""}
+      </div>
+
+      <div style="margin-top:14px">Yang bertandatangan dibawah ini :</div>
+      <table style="margin-top:6px; font-size:11pt;">
+        <tr><td style="width:90px">Nama</td><td>:</td><td><b>${d.namaTtd||"—"}</b></td></tr>
+        <tr><td>NIP</td><td>:</td><td>${d.nipTtd||"—"}</td></tr>
+        <tr><td>Jabatan</td><td>:</td><td>${d.jabatanTtd||"—"}</td></tr>
+      </table>
+
+      <div style="margin-top:10px">
+        Berdasarkan Surat Perintah Tanggal <b>${tglSurat}</b> Nomor: <b>${d.nomorSurat||"—"}</b>,
+        dengan ini menyatakan dengan sesungguhnya bahwa:
+      </div>
+
+      <ol style="padding-left:20px; margin-top:8px;">
+        <li>Biaya ${(g.kategori||"belanja").toLowerCase()} yang dikeluarkan, meliputi :</li>
+      </ol>
+
+      <table class="doc-table" style="margin-top:6px;">
+        <thead>
+          <tr>
+            <th style="width:5%">No</th>
+            <th>Rincian Biaya</th>
+            <th style="width:22%">Jumlah</th>
+            <th style="width:22%">Keterangan</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows}
+          <tr>
+            <td colspan="2" class="ctr"><b>JUMLAH</b></td>
+            <td class="num"><b>${formatRupiah(total)}</b></td>
+            <td></td>
+          </tr>
+          <tr>
+            <td colspan="4"><i class="terbilang">Terbilang: ${terbilang(total)}</i></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <ol start="2" style="padding-left:20px; margin-top:10px;">
+        <li>Jumlah uang tersebut pada angka 1 di atas benar-benar dikeluarkan untuk pelaksanaan kegiatan dimaksud, dan apabila di kemudian hari terdapat kelebihan atas pembayaran, kami bersedia untuk menyetorkan kelebihan tersebut ke Kas Negara.</li>
+      </ol>
+
+      <div style="margin-top:8px">
+        Demikian pernyataan ini kami buat dengan sebenarnya, untuk dipergunakan sebagaimana mestinya.
+      </div>
+
+      <div class="ttd-grid">
+        <div class="ttd">
+          <div>Mengetahui,</div>
+          <div class="role">Pejabat Pembuat Komitmen,</div>
+          <div class="name">${d.namaTtd||"—"}</div>
+          <div class="nip">NIP. ${d.nipTtd||"—"}</div>
+        </div>
+        <div class="ttd">
+          <div>${d.kotaTtd||"Pontianak"}, ${tglCetak}</div>
+          <div class="role">Penerima,</div>
+          <div class="name">${d.namaPenerima||d.namaTtd||"—"}</div>
+          <div class="nip">NIP. ${d.nipTtd||"—"}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function sheetRincianHTML(idx){
+  const h = state.header;
+  const p = state.pegawai[idx];
+  const t = totalsForPegawai(p);
+  const grand = t.grand;
+  const tanggalCetak = h.tanggalSPT? formatTanggalID(h.tanggalSPT) : "";
+  const pelaksanaan = tglPelaksanaanText(p);
+
+  // Bangun baris-baris rincian biaya (1 baris = 1 <tr> agar kolom presisi)
+  const rincianLines = [];
+  rincianLines.push({ desc:`<b>${h.namaProgram||"—"}</b><br/>An. <b>${p.nama||"—"}</b>${pelaksanaan?`<br/>${pelaksanaan}`:""}`, amt:"", ket:"" });
+  rincianLines.push({ desc:`<i>Belanja Perjalanan Biasa</i>`, amt:"", ket:"" });
+  rincianLines.push({ desc:`- Tiket Pesawat`, amt: formatRupiah(t.tiketPP), ket:"" });
+  rincianLines.push({ desc:`<span style="display:inline-block;padding-left:18px">${p.maskapaiPergi||"—"}</span>`, amt:`<span style="color:#666">${formatRupiah(p.tiketPergi)}</span>`, ket: p.buktiTiket||"Bukti Terlampir" });
+  rincianLines.push({ desc:`<span style="display:inline-block;padding-left:18px">${p.maskapaiPulang||"—"}</span>`, amt:`<span style="color:#666">${formatRupiah(p.tiketPulang)}</span>`, ket: p.buktiTiket||"Bukti Terlampir" });
+  rincianLines.push({ desc:`- Uang Harian &nbsp; ${num(p.lamaHari)} × ${formatRupiah(p.uangHarian)}`, amt: formatRupiah(t.uangHarianTotal), ket: p.buktiUangHarian||"Tidak Ada Bukti" });
+  if (num(p.penginapan))  rincianLines.push({ desc:`- Penginapan`, amt: formatRupiah(p.penginapan), ket: p.buktiPenginapan||"Bukti Terlampir" });
+  if (num(p.taksi))       rincianLines.push({ desc:`- Taksi`, amt: formatRupiah(p.taksi), ket: p.buktiTaksi||"Bukti Terlampir" });
+  if (num(p.taksiDaerah)) rincianLines.push({ desc:`- Taksi Daerah`, amt: formatRupiah(p.taksiDaerah), ket: p.buktiTaksiDaerah||"Bukti Terlampir" });
+  if (num(p.transportKab))rincianLines.push({ desc:`- Transport Antar Kab/Kota`, amt: formatRupiah(p.transportKab), ket: p.buktiTransportKab||"Tidak Ada Bukti" });
+  if (num(p.representasi))rincianLines.push({ desc:`- Uang Representasi`, amt: formatRupiah(p.representasi), ket: p.buktiRepresentasi||"Tidak Ada Bukti" });
+  const rincianRows = rincianLines.map((r,ri)=>{
+    const noCell = ri===0? `<td class="ctr" rowspan="${rincianLines.length}">1</td>` : "";
+    return `<tr>${noCell}<td>${r.desc}</td><td class="num">${r.amt}</td><td style="font-size:10pt" class="ctr">${r.ket}</td></tr>`;
+  }).join("");
+
+  return `
+    <div class="sheet">
+      ${kopHTML()}
+      <div class="doc-title">RINCIAN BIAYA PERJALANAN DINAS</div>
+      <table style="margin: 6px auto 10px; font-size:11pt">
+        <tr><td>Lampiran SPD Nomor</td><td>:</td><td><b>${p.noSPD||"—"}</b></td></tr>
+        <tr><td>Tanggal</td><td>:</td><td>${formatTanggalID(p.tanggalSPD)||"—"}</td></tr>
+      </table>
+
+      <table class="doc-table">
+        <thead>
+          <tr>
+            <th style="width:5%">No</th>
+            <th>Perincian Biaya</th>
+            <th style="width:20%">Jumlah (Rp)</th>
+            <th style="width:18%">Keterangan</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rincianRows}
+          <tr>
+            <td colspan="2" class="ctr"><b>JUMLAH</b></td>
+            <td class="num"><b>${formatRupiah(grand)}</b></td>
+            <td></td>
+          </tr>
+          <tr>
+            <td colspan="4"><i class="terbilang">Terbilang: ${terbilang(grand)}</i></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="ttd-grid">
+        <div class="ttd">
+          <div>Telah Dibayar Sejumlah</div>
+          <div><b>${formatRupiah(grand)}</b></div>
+          <div style="margin-top:8px" class="role">Bendahara Pengeluaran,</div>
+          <div class="name">${h.namaBendahara||"—"}</div>
+          <div class="nip">NIP. ${h.nipBendahara||"—"}</div>
+        </div>
+        <div class="ttd">
+          <div>${h.kotaTerbit||"Pontianak"}, ${tanggalCetak||"—"}</div>
+          <div>Telah Menerima Jumlah Uang Sebesar</div>
+          <div><b>${formatRupiah(grand)}</b></div>
+          <div style="margin-top:8px" class="role">Yang Menerima,</div>
+          <div class="name">${p.nama||"—"}</div>
+          <div class="nip">NIP. ${p.nip||"—"}</div>
+        </div>
+      </div>
+
+      <div style="margin-top:20px; border-top:1px solid #000; padding-top:10px;">
+        <div style="text-align:center; font-weight:700; text-decoration:underline; margin-bottom:8px;">PERHITUNGAN SPD RAMPUNG</div>
+        <table style="margin:0 auto; font-size:11pt">
+          <tr><td style="width:200px">Ditetapkan sejumlah</td><td>:</td><td><b>${formatRupiah(grand)}</b></td></tr>
+          <tr><td>Yang telah dibayar semula</td><td>:</td><td>${formatRupiah(grand)}</td></tr>
+          <tr><td>Sisa Kurang / Lebih dibayar</td><td>:</td><td>${formatRupiah(0)}</td></tr>
+        </table>
+        <div style="text-align:right; margin-top:24px">
+          <div class="role">Pejabat Pembuat Komitmen,</div>
+          <div style="height:60px"></div>
+          <div class="name" style="display:inline-block">${h.namaPPK||"—"}</div>
+          <div class="nip">NIP. ${h.nipPPK||"—"}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sheet">
+      ${kopHTML()}
+      <div class="doc-title">DAFTAR PENGELUARAN RILL</div>
+
+      <div style="margin-top:10px">Yang bertandatangan dibawah ini:</div>
+      <table style="margin-top:6px; font-size:11pt;">
+        <tr><td style="width:90px">Nama</td><td>:</td><td><b>${p.nama||"—"}</b></td></tr>
+        <tr><td>NIP</td><td>:</td><td>${p.nip||"—"}</td></tr>
+        <tr><td>Jabatan</td><td>:</td><td>${p.jabatan||"—"}</td></tr>
+      </table>
+
+      <div style="margin-top:10px">
+        Berdasarkan Surat Perjalanan Dinas (SPD) Nomor: <b>${p.noSPD||"—"}</b> tanggal <b>${formatTanggalID(p.tanggalSPD)||"—"}</b>, dengan ini menyatakan dengan sesungguhnya bahwa:
+      </div>
+
+      <ol style="padding-left:20px; margin-top:8px;">
+        <li>Biaya transportasi pegawai dan/atau biaya penginapan di bawah ini yang tidak dapat diperoleh bukti-bukti pengeluarannya, meliputi:</li>
+      </ol>
+
+      <table class="doc-table" style="margin-top:6px">
+        <thead>
+          <tr>
+            <th style="width:5%">No</th>
+            <th>Uraian</th>
+            <th style="width:25%">Jumlah</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="ctr">1</td><td>Taksi</td><td class="num">${formatRupiah(p.taksi)}</td></tr>
+          <tr><td class="ctr">2</td><td>Taksi Daerah</td><td class="num">${formatRupiah(p.taksiDaerah)}</td></tr>
+          <tr><td class="ctr">3</td><td>Transport Antar Kab/Kota</td><td class="num">${formatRupiah(p.transportKab)}</td></tr>
+          <tr>
+            <td colspan="2" class="ctr"><b>JUMLAH</b></td>
+            <td class="num"><b>${formatRupiah(num(p.taksi)+num(p.taksiDaerah)+num(p.transportKab))}</b></td>
+          </tr>
+          <tr><td colspan="3"><i class="terbilang">Terbilang: ${terbilang(num(p.taksi)+num(p.taksiDaerah)+num(p.transportKab))}</i></td></tr>
+        </tbody>
+      </table>
+
+      <ol start="2" style="padding-left:20px; margin-top:10px">
+        <li>Jumlah uang tersebut pada angka 1 di atas benar-benar dikeluarkan untuk pelaksanaan perjalanan dinas dimaksud, dan apabila dikemudian hari terdapat kelebihan atas pembayaran, kami bersedia menyetorkan kelebihan tersebut ke Kas Negara.</li>
+      </ol>
+
+      <div style="margin-top:8px">
+        Demikian pernyataan ini dibuat dengan sebenarnya, untuk dipergunakan sebagaimana mestinya.
+      </div>
+
+      <div class="ttd-grid">
+        <div class="ttd">
+          <div>Mengetahui / Menyetujui,</div>
+          <div class="role">Pejabat Pembuat Komitmen,</div>
+          <div class="name">${h.namaPPK||"—"}</div>
+          <div class="nip">NIP. ${h.nipPPK||"—"}</div>
+        </div>
+        <div class="ttd">
+          <div>${h.kotaTerbit||"Pontianak"}, ${tanggalCetak||"—"}</div>
+          <div class="role">Pelaksana Perjalanan Dinas,</div>
+          <div class="name">${p.nama||"—"}</div>
+          <div class="nip">NIP. ${p.nip||"—"}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* ================================================================
+   PRINT TRIGGERS
+   ================================================================ */
+
+// Detect mobile/tablet (touch devices or narrow viewport)
+function isMobile(){
+  return ('ontouchstart' in window || navigator.maxTouchPoints > 0) ||
+         window.matchMedia('(max-width: 900px)').matches;
+}
+
+// Print preview modal elements
+const ppOverlay   = document.getElementById('print-preview-overlay');
+const ppBodyWrap  = document.getElementById('print-preview-body-wrap');
+const btnPPClose  = document.getElementById('btn-pp-close');
+const btnPPPrint  = document.getElementById('btn-pp-print');
+
+btnPPClose.addEventListener('click', ()=>{ ppOverlay.classList.remove('open'); });
+
+btnPPPrint.addEventListener('click', ()=>{
+  // Close the preview overlay first so it doesn't appear on print output
+  ppOverlay.classList.remove('open');
+  // window.print() is called synchronously inside user gesture — works on mobile
+  window.print();
+});
+
+// Tap outside the preview body to close
+ppOverlay.addEventListener('click', (e)=>{
+  if (e.target === ppOverlay) ppOverlay.classList.remove('open');
+});
+
+function injectPrintAndPrint(html){
+  // Always inject into print-root for @media print rendering
+  const root = document.getElementById('print-root');
+  root.innerHTML = html;
+
+  if (isMobile()) {
+    // On mobile: show the elegant print preview modal instead of blind print()
+    // This lets the user see the document and tap "Cetak" to trigger print synchronously
+    ppBodyWrap.innerHTML = html;
+    ppOverlay.classList.add('open');
+    ppBodyWrap.scrollTop = 0;
+  } else {
+    // On desktop: use the original async trigger (safe because user gesture is not lost)
+    setTimeout(()=>window.print(), 80);
+  }
+}
+
+function printNominatif(){
+  if (!validateBeforePrint()) return;
+  injectPrintAndPrint(sheetNominatifHTML());
+}
+function validateDPR(){
+  let bad = 0;
+  document.querySelectorAll('#view-dpr .field').forEach(f=>f.classList.remove('invalid'));
+  if (!state.dpr.namaTtd){
+    const el = document.querySelector('[data-d="namaTtd"]');
+    if (el) el.closest('.field').classList.add('invalid');
+    bad++;
+  }
+  if (bad>0){ toast("✗ Nama penandatangan wajib diisi"); return false; }
+  return true;
+}
+function printDPRGroup(groupKey){
+  if (!validateDPR()) return;
+  injectPrintAndPrint(sheetDPRGroupHTML(groupKey));
+}
+function printDPRBoth(){
+  if (!validateDPR()) return;
+  injectPrintAndPrint(sheetDPRGroupHTML('g1') + sheetDPRGroupHTML('g2'));
+}
+function printRincianOne(i){
+  if (!validateBeforePrint()) return;
+  injectPrintAndPrint(sheetRincianHTML(i));
+}
+function printAllRincian(){
+  if (!validateBeforePrint()) return;
+  const all = state.pegawai.map((_,i)=>sheetRincianHTML(i)).join("");
+  injectPrintAndPrint(all);
+}
+
+window.addEventListener('afterprint', ()=>{
+  // clear print root so it doesn't bloat DOM
+  document.getElementById('print-root').innerHTML = "";
+  // Also clear preview body to free memory
+  ppBodyWrap.innerHTML = "";
+});
+
+/* ================================================================
+   DPR PIC FORM RENDER / BIND / PREVIEW
+   ================================================================ */
+function bindDPRHeader(){
+  document.querySelectorAll('[data-d]').forEach(el=>{
+    const key = el.dataset.d;
+    el.value = state.dpr[key] ?? "";
+    el.oninput = ()=>{
+      state.dpr[key] = el.value;
+      if (key === 'namaTtd'){
+        const m = daftarPegawai.find(x=>x.nama===el.value);
+        if (m){
+          state.dpr.nipTtd = m.nip;
+          state.dpr.jabatanTtd = m.jabatan;
+          document.querySelector('[data-d="nipTtd"]').value = m.nip;
+          document.querySelector('[data-d="jabatanTtd"]').value = m.jabatan;
+        }
+      }
+      save();
+    };
+  });
+  // group header fields
+  document.querySelectorAll('[data-g]').forEach(el=>{
+    const gk = el.dataset.g, key = el.dataset.gk;
+    el.value = state.dpr[gk][key] ?? "";
+    el.oninput = ()=>{ state.dpr[gk][key] = el.value; save(); };
+  });
+}
+
+function dprItemHTML(gk, it, i){
+  return `
+    <div class="dpr-item" data-di="${gk}-${i}">
+      <div class="dpr-item-head">
+        <div class="ix">${String(i+1).padStart(2,'0')}</div>
+        <div style="font-size:12px; color:var(--text-2); letter-spacing:.08em;">RINCIAN BIAYA</div>
+        <div class="calc" data-dcalc>Rp 0</div>
+        <button class="btn btn-danger btn-sm" data-drem="${gk}-${i}">✕</button>
+      </div>
+      <div class="field" style="margin-bottom:10px;">
+        <label>Uraian</label>
+        <input data-df="uraian" type="text" placeholder="Biaya Uang Harian untuk 5 (lima) orang petugas selama 3 (tiga) hari" />
+      </div>
+      <div class="dpr-calc-row">
+        <div class="field"><label>Qty 1</label><input data-df="qty1" type="number" min="0" step="1" /></div>
+        <div class="field"><label>Satuan</label><input data-df="sat1" type="text" placeholder="Org" /></div>
+        <div class="field"><label>Qty 2</label><input data-df="qty2" type="number" min="0" step="1" /></div>
+        <div class="field"><label>Satuan</label><input data-df="sat2" type="text" placeholder="Hari" /></div>
+        <div class="field"><label>Tarif (Rp)</label><input data-df="tarif" type="number" min="0" step="1000" /></div>
+        <div class="field"><label>Keterangan</label><input data-df="ket" type="text" /></div>
+      </div>
+    </div>
+  `;
+}
+
+function renderDPRItems(gk){
+  const wrap = document.querySelector(`[data-items="${gk}"]`);
+  const items = state.dpr[gk].items;
+  wrap.innerHTML = items.map((it,i)=>dprItemHTML(gk,it,i)).join("");
+  wrap.querySelectorAll('.dpr-item').forEach((card,i)=>{
+    const it = items[i];
+    card.querySelectorAll('[data-df]').forEach(inp=>{
+      const key = inp.dataset.df;
+      inp.value = it[key] ?? "";
+      inp.addEventListener('input', ()=>{
+        let v = inp.value;
+        if (inp.type==='number') v = inp.value===""?0:Number(inp.value);
+        it[key] = v;
+        card.querySelector('[data-dcalc]').textContent = formatRupiah(dprItemJumlah(it));
+        updateGroupTotal(gk);
+        save();
+      });
+    });
+    card.querySelector('[data-dcalc]').textContent = formatRupiah(dprItemJumlah(it));
+    card.querySelector(`[data-drem="${gk}-${i}"]`).addEventListener('click', ()=>{
+      if (items.length===1){ toast("Minimal satu rincian"); return; }
+      items.splice(i,1); save(); renderDPRItems(gk); updateGroupTotal(gk);
+    });
+  });
+  updateGroupTotal(gk);
+}
+
+function updateGroupTotal(gk){
+  const total = dprGroupTotal(state.dpr[gk]);
+  const el = document.querySelector(`[data-grptotal="${gk}"]`);
+  if (el){
+    el.innerHTML = `
+      <div class="lbl">Jumlah ${gk==='g1'?'Form 1':'Form 2'}</div>
+      <div class="amt">${formatRupiah(total)}</div>
+      <div class="terb">Terbilang: ${terbilang(total)}</div>
+    `;
+  }
+}
+
+document.querySelectorAll('[data-additem]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const gk = btn.dataset.additem;
+    state.dpr[gk].items.push(blankDPRItem());
+    save(); renderDPRItems(gk);
+  });
+});
+
+function renderDPR(){
+  bindDPRHeader();
+  renderDPRItems('g1');
+  renderDPRItems('g2');
+}
+
+function renderDPRPreview(){
+  const wrap = (label, html)=>`
+    <div class="paper-page-label">${label}</div>
+    <div class="paper">${html}</div>
+  `;
+  document.getElementById('dpr-paper').innerHTML =
+    wrap("Halaman 1 · Form Uang Harian", sheetDPRGroupHTML('g1')) +
+    wrap("Halaman 2 · Form Pengeluaran Lainnya", sheetDPRGroupHTML('g2'));
+}
+
+/* ================================================================
+   CONTOH DATA
+   ================================================================ */
+const contohData = {
+  header: {
+    judulKegiatan: "MELAKUKAN KEGIATAN KOORDINASI TERKAIT CONTACT CENTRE DAN PENANGANAN PENGADUAN PADA KANTOR IMIGRASI KELAS I TPI PONTIANAK KE DIREKTORAT JENDERAL IMIGRASI JAKARTA",
+    nomorSPT: "WIM.16.IMI.1-TI.04.01-2438",
+    tanggalSPT: "2026-05-05",
+    namaProgram: "Pengelolaan Teknologi Informasi Keimigrasian",
+    tanggalKegiatan: "6 sd 8 Mei 2026",
+    tujuanKota: "Jakarta",
+    namaPPK: "SYECH MUKHAMAR REZA KHARAMI, S.H.",
+    nipPPK: "19840831 200312 1 001",
+    jabatanPPK: "KASI REG, ADMINISTRASI & PELAPORAN",
+    namaBendahara: "MUHAMMAD REZA, S.H.",
+    nipBendahara: "19840124 200212 1 002",
+    kotaTerbit: "Pontianak",
+    kodeAnggaran: ""
+  },
+  pegawai: [
+    {
+      nama:"SYECH MUKHAMAR REZA KHARAMI, S.H.", nip:"19840831 200312 1 001",
+      golongan:"III", jabatan:"KASI REG, ADMINISTRASI & PELAPORAN",
+      tujuan:"Jakarta", noSPD:"WIM.16.IMI.1-KU.03.01-2439", tanggalSPD:"2026-05-25",
+      tanggalPelaksanaan:"28 sd 28 Mei 2026", tglMulai:"2026-05-28", tglSelesai:"2026-05-28", lamaHari:1, uangHarian:530000,
+      maskapaiPergi:"Batik Air (PNK - CGK)", tiketPergi:1550263,
+      maskapaiPulang:"Citilink (CGK - PNK)", tiketPulang:1481947,
+      taksi:250000, taksiDaerah:96200, transportKab:0,
+      penginapan:1460000, representasi:0,
+      rekening:"BPG 042 655216928301000"
+    },
+    {
+      nama:"SAULINA SIMORANGKIR, S.S.", nip:"19800803 200912 2 001",
+      golongan:"III", jabatan:"KASUBSI REGISTRASI",
+      tujuan:"Jakarta", noSPD:"WIM.16.IMI.1-KU.03.01-2440", tanggalSPD:"2026-05-27",
+      tanggalPelaksanaan:"28 sd 28 Mei 2026", tglMulai:"2026-05-28", tglSelesai:"2026-05-28", lamaHari:1, uangHarian:530000,
+      maskapaiPergi:"Batik Air (PNK - CGK)", tiketPergi:1550263,
+      maskapaiPulang:"Citilink (CGK - PNK)", tiketPulang:1481947,
+      taksi:500000, taksiDaerah:311500, transportKab:0,
+      penginapan:1460000, representasi:0,
+      rekening:"BPG 042 655216928301000"
+    }
+  ],
+  dpr: {
+    namaTtd:"SYECH MUKHAMAR REZA KHARAMI, S.H.", nipTtd:"19840831 200312 1 001",
+    jabatanTtd:"KASI REG, ADMINISTRASI & PELAPORAN", kotaTtd:"Pontianak",
+    tanggalSurat:"2026-05-05", tanggalCetak:"2026-05-08",
+    nomorSurat:"WIM.16.IMI.1-TI.04.01-2438",
+    namaPenerima:"SYECH MUKHAMAR REZA KHARAMI, S.H.",
+    g1: {
+      baris1:"OPERASI INTELIJEN DI WILAYAH", baris2:"PENGUMPULAN DATA DAN INFORMASI",
+      kategori:"BELANJA BARANG NON OPERASIONAL LAINNYA", kode:"(6161.BHB.U12.051.A.521219)",
+      items:[
+        { uraian:"Biaya Uang Harian untuk 5 (lima) orang petugas selama 3 (tiga) hari pada Tanggal 6 sd 8 Mei 2026", qty1:5, sat1:"Org", qty2:3, sat2:"Hari", tarif:530000, ket:"Biaya Pengamatan/Penyusupan/Penelitian/Penjejakan" },
+        { uraian:"Biaya Informan 1 (satu) orang", qty1:1, sat1:"Org", qty2:1, sat2:"Keg", tarif:1700000, ket:"" }
+      ]
+    },
+    g2: {
+      baris1:"OPERASI INTELIJEN DI WILAYAH", baris2:"PENGUMPULAN DATA DAN INFORMASI",
+      kategori:"BELANJA SEWA", kode:"(6161.BHB.U12.051.A.522141)",
+      items:[
+        { uraian:"Biaya sewa Safehouse 1 (satu) unit selama 3 (tiga) hari pada Tanggal 6 sd 8 Mei 2026", qty1:1, sat1:"unit", qty2:1, sat2:"Keg", tarif:3000000, ket:"" }
+      ]
+    }
+  }
+};
+
+/* ================================================================
+   INIT
+   ================================================================ */
+function init(){
+  fillDatalist();
+  const hadSaved = load();
+  if (!hadSaved){
+    // start empty but pre-fill kota terbit
+    state.header.kotaTerbit = "Pontianak";
+  }
+  bindHeader();
+  renderAllPegawai();
+  renderDPR();
+}
+init();
+</script>
+
+
+
+</body></html>
