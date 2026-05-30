@@ -659,17 +659,15 @@
     .kelola-table .aksi-cell{ flex-direction: column; }
   }
 
-  /* Sub-tab bar di Kelola Rekap */
-  .kelola-subtabs{
-    display: flex; gap: 4px; padding: 0 0 16px 0; border-bottom: 1px solid var(--border); margin-bottom: 16px;
+  /* Edit picker inline di Kelola Rekap */
+  .edit-picker{
+    display: none; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 6px;
+    padding: 8px 10px; background: rgba(200,169,81,.06);
+    border: 1px solid rgba(200,169,81,.25); border-radius: var(--radius);
   }
-  .kelola-subtab{
-    padding: 7px 18px; border-radius: var(--radius); font-size: 13px; font-weight: 600;
-    cursor: pointer; border: 1px solid var(--border); background: transparent;
-    color: var(--text-2); transition: all .15s; letter-spacing: .04em;
+  .edit-picker .pick-label{
+    font-size: 11px; color: var(--text-2); width: 100%; margin-bottom: 2px;
   }
-  .kelola-subtab:hover{ background: rgba(255,255,255,.05); color: var(--text); }
-  .kelola-subtab.active{ background: var(--gold); color: #1a1405; border-color: var(--gold); }
 
   /* ============================================================
      MOBILE SIDEBAR
@@ -967,15 +965,7 @@
           <button class="btn btn-print btn-sm" id="btn-print-rekap" style="margin-left:8px">📋 Cetak Rekap</button>
         </div>
         <div class="section-body">
-          <!-- Sub-tab: Rincian SPD / DPR -->
-          <div class="kelola-subtabs">
-            <button class="kelola-subtab active" data-ktab="spd">📋 Rincian SPD</button>
-            <button class="kelola-subtab" data-ktab="dpr">📄 DPR</button>
-          </div>
           <div id="sessions-container">
-            <div class="kelola-empty">Memuat data dari server…</div>
-          </div>
-          <div id="sessions-dpr-container" style="display:none">
             <div class="kelola-empty">Memuat data dari server…</div>
           </div>
         </div>
@@ -2942,22 +2932,15 @@ function formatTanggalWaktu(isoStr){
 
 async function loadSessions(){
   const container = document.getElementById('sessions-container');
-  const containerDPR = document.getElementById('sessions-dpr-container');
   container.innerHTML = '<div class="kelola-empty">Memuat data dari server…</div>';
-  containerDPR.innerHTML = '<div class="kelola-empty">Memuat data dari server…</div>';
   try{
     const resp = await fetch('/api/sessions');
     const json = await resp.json();
     if (!json.success) throw new Error(json.error);
     renderSessionsTable(json.data);
-    renderSessionsDPRTable(json.data);
   } catch(e){
     container.innerHTML = `<div class="kelola-empty">⚠ Gagal memuat: ${e.message}</div>`;
-    containerDPR.innerHTML = `<div class="kelola-empty">⚠ Gagal memuat: ${e.message}</div>`;
   }
-  // Pastikan container yang tampil sesuai sub-tab aktif
-  container.style.display = _kelolaActiveTab === 'spd' ? '' : 'none';
-  containerDPR.style.display = _kelolaActiveTab === 'dpr' ? '' : 'none';
 }
 
 function renderSessionsTable(sessions){
@@ -2987,10 +2970,16 @@ function renderSessionsTable(sessions){
         <td class="num-col">${formatRupiah(tot.grand)}</td>
         <td class="sub" style="white-space:nowrap">${tgl}</td>
         <td>
-          <div class="aksi-cell">
-            <button class="btn btn-primary btn-sm" onclick="muatSesiKeForm(${s.id})">✏️ Muat &amp; Edit</button>
+          <div class="aksi-cell" id="aksi-${s.id}">
+            <button class="btn btn-primary btn-sm" onclick="showEditPicker(${s.id})">✏️ Muat &amp; Edit</button>
             <button class="btn btn-print btn-sm" onclick="cetakRekapSesi(${s.id})">🖨️ Cetak Rekap</button>
             <button class="btn btn-danger btn-sm" onclick="hapusSesi(${s.id})">🗑️ Hapus</button>
+          </div>
+          <div class="edit-picker" id="picker-${s.id}">
+            <span class="pick-label">Pilih data yang akan diedit:</span>
+            <button class="btn btn-primary btn-sm" onclick="muatSesiKeForm(${s.id})">📋 Rincian SPD</button>
+            <button class="btn btn-primary btn-sm" onclick="muatSesiKeDPR(${s.id})">📄 DPR</button>
+            <button class="btn btn-ghost btn-sm" onclick="hideEditPicker(${s.id})">✕ Batal</button>
           </div>
         </td>
       </tr>
@@ -3024,92 +3013,18 @@ function renderSessionsTable(sessions){
   `;
 }
 
-function renderSessionsDPRTable(sessions){
-  const container = document.getElementById('sessions-dpr-container');
-  if (!sessions || sessions.length === 0){
-    container.innerHTML = '<div class="kelola-empty">Belum ada data DPR tersimpan di server.<br/>Gunakan tombol <b>💾 Simpan Data</b> pada tab DPR.</div>';
-    return;
-  }
-  let grandG1 = 0, grandG2 = 0;
-  const rows = sessions.map((s, i)=>{
-    const d = s.data || {};
-    const h = d.header || {};
-    const dpr = d.dpr || {};
-    const g1 = dpr.g1 || { items:[] };
-    const g2 = dpr.g2 || { items:[] };
-    const totG1 = (g1.items||[]).reduce((sum,it)=>sum+(num(it.qty1)||1)*(num(it.qty2)||1)*num(it.tarif),0);
-    const totG2 = (g2.items||[]).reduce((sum,it)=>sum+(num(it.qty1)||1)*(num(it.qty2)||1)*num(it.tarif),0);
-    grandG1 += totG1; grandG2 += totG2;
-    const judul = h.judulKegiatan || '—';
-    const nomorSPT = h.nomorSPT || '—';
-    const nomorSurat = dpr.nomorSurat || '—';
-    const namaTtd = dpr.namaTtd || '—';
-    const tgl = formatTanggalWaktu(s.created_at);
-    const hasDPR = dpr.nomorSurat || dpr.namaTtd || totG1 > 0 || totG2 > 0;
-    return `
-      <tr>
-        <td class="ctr">${i+1}</td>
-        <td>
-          <div class="judul">${judul}</div>
-          <div class="sub">${nomorSPT}</div>
-        </td>
-        <td>
-          <div class="judul" style="font-size:12px">${nomorSurat}</div>
-          <div class="sub">${namaTtd}</div>
-        </td>
-        <td class="num-col">${totG1 > 0 ? formatRupiah(totG1) : '<span style="color:var(--text-3)">—</span>'}</td>
-        <td class="num-col">${totG2 > 0 ? formatRupiah(totG2) : '<span style="color:var(--text-3)">—</span>'}</td>
-        <td class="sub" style="white-space:nowrap">${tgl}</td>
-        <td>
-          <div class="aksi-cell">
-            <button class="btn btn-primary btn-sm" onclick="muatSesiKeDPR(${s.id})">✏️ Muat &amp; Edit</button>
-            <button class="btn btn-danger btn-sm" onclick="hapusSesi(${s.id})">🗑️ Hapus</button>
-          </div>
-        </td>
-      </tr>
-    `;
-  }).join('');
-
-  container.innerHTML = `
-    <table class="kelola-table">
-      <thead>
-        <tr>
-          <th class="ctr" style="width:3%">No</th>
-          <th>Judul Kegiatan / Nomor SPT</th>
-          <th>Nomor Surat / Penandatangan</th>
-          <th class="num-col" style="width:14%">Form 1</th>
-          <th class="num-col" style="width:14%">Form 2</th>
-          <th style="width:14%">Disimpan</th>
-          <th style="width:16%">Aksi</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${rows}
-      </tbody>
-      <tfoot>
-        <tr class="kelola-total-row">
-          <td colspan="2" style="text-align:right">TOTAL KESELURUHAN</td>
-          <td class="ctr">${sessions.length} sesi</td>
-          <td class="num-col">${formatRupiah(grandG1)}</td>
-          <td class="num-col">${formatRupiah(grandG2)}</td>
-          <td colspan="2"></td>
-        </tr>
-      </tfoot>
-    </table>
-  `;
+function showEditPicker(id){
+  document.querySelectorAll('.edit-picker').forEach(p=>{ p.style.display='none'; });
+  document.querySelectorAll('[id^="aksi-"]').forEach(a=>{ a.style.display='flex'; });
+  const aksi = document.getElementById('aksi-'+id);
+  const picker = document.getElementById('picker-'+id);
+  if (aksi && picker){ aksi.style.display='none'; picker.style.display='flex'; }
 }
-
-/* Sub-tab logic di Kelola Rekap */
-let _kelolaActiveTab = 'spd';
-document.querySelectorAll('.kelola-subtab').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    document.querySelectorAll('.kelola-subtab').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    _kelolaActiveTab = btn.dataset.ktab;
-    document.getElementById('sessions-container').style.display = _kelolaActiveTab === 'spd' ? '' : 'none';
-    document.getElementById('sessions-dpr-container').style.display = _kelolaActiveTab === 'dpr' ? '' : 'none';
-  });
-});
+function hideEditPicker(id){
+  const aksi = document.getElementById('aksi-'+id);
+  const picker = document.getElementById('picker-'+id);
+  if (aksi && picker){ aksi.style.display='flex'; picker.style.display='none'; }
+}
 
 // Simpan semua sesi di memori untuk lookup cepat
 let _cachedSessions = [];
