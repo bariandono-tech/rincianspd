@@ -536,6 +536,49 @@
   }
   @page landscape{ size: A4 landscape; margin: 12mm 10mm; }
 
+  /* Rekap SPPD Luar Kota table */
+  .sppd-rekap-table{
+    width: 100%; border-collapse: collapse;
+    font-size: 6.5pt; table-layout: fixed;
+  }
+  .sppd-rekap-table th, .sppd-rekap-table td{
+    border: 1px solid #000; padding: 2px 3px;
+    vertical-align: middle; word-break: break-word;
+    text-align: center;
+  }
+  .sppd-rekap-table th{
+    background: #e8e8e8; font-weight: bold; font-size: 6pt;
+    line-height: 1.2;
+  }
+  .sppd-rekap-table td.num{ text-align: right; }
+  .sppd-rekap-table td.left{ text-align: left; }
+
+  /* Rekap SPPD on-screen view */
+  .rekap-sppd-wrap{ overflow-x: auto; }
+  .rekap-sppd-screen-table{
+    border-collapse: collapse; font-size: 11px;
+  }
+  .rekap-sppd-screen-table th{
+    background: var(--card-2); color: var(--text-2);
+    font-weight: 600; padding: 6px 8px; text-align: center;
+    border: 1px solid var(--border); font-size: 10px;
+    text-transform: uppercase; letter-spacing: .03em;
+    white-space: normal; word-break: normal;
+    line-height: 1.3; vertical-align: middle;
+  }
+  .rekap-sppd-screen-table td{
+    padding: 6px 8px; border: 1px solid var(--border);
+    color: var(--text); vertical-align: middle;
+    white-space: nowrap;
+  }
+  .rekap-sppd-screen-table td.wrap{ white-space: normal; word-break: break-word; max-width: 200px; }
+  .rekap-sppd-screen-table td.num{ text-align: right; font-variant-numeric: tabular-nums; }
+  .rekap-sppd-screen-table td.ctr{ text-align: center; }
+  .rekap-sppd-screen-table tbody tr:hover{ background: rgba(255,255,255,.04); }
+  .rekap-sppd-screen-table .th-group{
+    background: rgba(200,169,81,.08); color: var(--gold-soft);
+  }
+
   /* Footer responsiveness */
   @media (max-width: 900px){
     .g-3, .g-4, .g-6{ grid-template-columns: repeat(2, minmax(0,1fr)); }
@@ -580,6 +623,7 @@
     .kelola-table .aksi-cell{ flex-direction: column; }
   }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
 
@@ -604,6 +648,7 @@
     <button class="tab active" data-tab="pengisian" role="tab"><span class="dot"></span>Pengisian</button>
     <button class="tab" data-tab="dpr" role="tab"><span class="dot"></span>DPR PIC</button>
     <button class="tab" data-tab="kelola" role="tab"><span class="dot"></span>Kelola Rekap</button>
+    <button class="tab" data-tab="rekap-sppd" role="tab"><span class="dot"></span>Rekap SPPD</button>
   </nav>
 
   <main class="main">
@@ -698,9 +743,7 @@
       <div class="actions-bar">
         <button class="btn btn-primary" id="btn-save">💾 Simpan Data</button>
         <button class="btn btn-print" id="btn-print-nominatif">🖨️ Cetak Nominatif</button>
-        <button class="btn btn-print" id="btn-print-dpr">🖨️ Cetak DPR PIC</button>
         <button class="btn btn-print" id="btn-print-all">🖨️ Cetak Rincian SPD Semua</button>
-        <button class="btn btn-print" id="btn-print-rekap">📋 Cetak Rekap</button>
         <div class="spacer"></div>
         <button class="btn btn-ghost" id="btn-loadexample">⤴ Muat Contoh</button>
         <button class="btn btn-danger" id="btn-reset">🗑️ Reset Form</button>
@@ -848,10 +891,30 @@
           <div class="num">📁</div>
           <h2>Kelola Data Tersimpan</h2>
           <button class="btn btn-ghost btn-sm" id="btn-refresh-sessions">↻ Muat Ulang</button>
+          <button class="btn btn-print btn-sm" id="btn-print-rekap" style="margin-left:8px">📋 Cetak Rekap</button>
         </div>
         <div class="section-body">
           <div id="sessions-container">
             <div class="kelola-empty">Memuat data dari server…</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== VIEW: REKAP SPPD ========== -->
+    <section class="view" id="view-rekap-sppd">
+      <div class="section">
+        <div class="section-head">
+          <div class="num">📊</div>
+          <h2>Rekap SPPD Luar Kota</h2>
+          <div class="hint" id="rekap-sppd-subtitle" style="margin-left:16px; font-size:12px; color:var(--text-2)"></div>
+          <div class="spacer" style="flex:1"></div>
+          <button class="btn btn-print btn-sm" id="btn-export-excel-sppd">⬇ Export Excel</button>
+          <button class="btn btn-print btn-sm" id="btn-print-sppd-tab" style="margin-left:8px">🖨️ Cetak</button>
+        </div>
+        <div class="section-body" style="padding:0">
+          <div class="rekap-sppd-wrap" id="rekap-sppd-container">
+            <div class="kelola-empty" style="padding:32px">Buka tab ini untuk melihat rekap SPPD sesi aktif.</div>
           </div>
         </div>
       </div>
@@ -1041,8 +1104,9 @@ const blankPegawai = () => ({
   noSPD:"", tanggalSPD:"", tanggalPelaksanaan:"",
   tglMulai:"", tglSelesai:"",
   lamaHari:1, uangHarian:0,
-  maskapaiPergi:"", tiketPergi:0,
-  maskapaiPulang:"", tiketPulang:0,
+  modaTransportasi:"", namaPenginapan:"", keterangan:"",
+  maskapaiPergi:"", noTiketPergi:"", tiketPergi:0,
+  maskapaiPulang:"", noTiketPulang:"", tiketPulang:0,
   taksi:0, taksiDaerah:0, transportKab:0,
   penginapan:0, representasi:0,
   rekening:"",
@@ -1257,6 +1321,7 @@ document.querySelectorAll('.tab').forEach(t=>{
     document.getElementById('view-'+t.dataset.tab).classList.add('active');
     if (t.dataset.tab === 'dpr') renderDPR();
     if (t.dataset.tab === 'kelola') { _cachedSessions = []; loadSessions(); }
+    if (t.dataset.tab === 'rekap-sppd') renderRekapSPPDScreen();
   });
 });
 
@@ -1373,20 +1438,38 @@ function pegawaiRowHTML(i){
             <input data-p-field="uangHarian" type="number" min="0" step="1000" placeholder="530000" />
           </div>
 
-          <div class="field col-3">
+          <div class="field col-2">
+            <label>Moda Transportasi</label>
+            <select data-p-field="modaTransportasi">
+              <option value="">— Pilih —</option>
+              <option value="Darat">Darat</option>
+              <option value="Udara">Udara</option>
+              <option value="Laut">Laut</option>
+            </select>
+          </div>
+
+          <div class="field col-2">
             <label>Maskapai Pergi</label>
             <input data-p-field="maskapaiPergi" type="text" placeholder="Batik Air (PNK - CGK)" />
           </div>
-          <div class="field col-3">
+          <div class="field col-2">
+            <label>No. Tiket Pergi</label>
+            <input data-p-field="noTiketPergi" type="text" placeholder="XXXXXXXXXXXXXXX" />
+          </div>
+          <div class="field col-2">
             <label>Harga Tiket Pergi (Rp)</label>
             <input data-p-field="tiketPergi" type="number" min="0" step="1000" />
           </div>
 
-          <div class="field col-3">
+          <div class="field col-2">
             <label>Maskapai Pulang</label>
             <input data-p-field="maskapaiPulang" type="text" placeholder="Citilink (CGK - PNK)" />
           </div>
-          <div class="field col-3">
+          <div class="field col-2">
+            <label>No. Tiket Pulang</label>
+            <input data-p-field="noTiketPulang" type="text" placeholder="XXXXXXXXXXXXXXX" />
+          </div>
+          <div class="field col-2">
             <label>Harga Tiket Pulang (Rp)</label>
             <input data-p-field="tiketPulang" type="number" min="0" step="1000" />
           </div>
@@ -1407,6 +1490,14 @@ function pegawaiRowHTML(i){
           <div class="field col-2">
             <label>Biaya Penginapan (Rp)</label>
             <input data-p-field="penginapan" type="number" min="0" step="1000" />
+          </div>
+          <div class="field col-2">
+            <label>Nama Penginapan</label>
+            <input data-p-field="namaPenginapan" type="text" placeholder="Hotel / nama tempat menginap" />
+          </div>
+          <div class="field col-2">
+            <label>Keterangan</label>
+            <input data-p-field="keterangan" type="text" placeholder="Catatan tambahan (opsional)" />
           </div>
           <div class="field col-2">
             <label>Uang Representasi (Rp)</label>
@@ -1625,11 +1716,6 @@ document.getElementById('btn-loadexample').addEventListener('click', ()=>{
 });
 
 document.getElementById('btn-print-nominatif').addEventListener('click', ()=>printNominatif());
-document.getElementById('btn-print-dpr').addEventListener('click', ()=>{
-  // switch to DPR view + print both groups
-  document.querySelector('[data-tab="dpr"]').click();
-  setTimeout(printDPRBoth, 80);
-});
 document.getElementById('btn-print-all').addEventListener('click', ()=>printAllRincian());
 document.getElementById('btn-print-rekap').addEventListener('click', ()=>printRekap());
 
@@ -1882,6 +1968,178 @@ function sheetRekapHTML(h, pegawaiArr){
           <div class="nip">NIP. ${h.nipBendahara||"—"}</div>
         </div>
       </div>
+    </div>
+  `;
+}
+
+function formatTglSPPD(tgl){
+  const m = String(tgl||"").match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return "";
+  return `${m[3]}/${m[2]}/${m[1]}`;
+}
+
+function sheetRekapSPPDHTML(h, pegawaiArr){
+  h = h || state.header;
+  pegawaiArr = pegawaiArr || state.pegawai;
+  const tahun = h.tanggalSPT ? h.tanggalSPT.slice(0,4) : new Date().getFullYear();
+  const rows = pegawaiArr.map((p,i)=>{
+    const lamaHari = num(p.lamaHari) || hitungLamaHari(p.tglMulai, p.tglSelesai) || "";
+    const uangHarian = num(p.uangHarian) * (num(p.lamaHari)||1);
+    return `
+      <tr>
+        <td>${i+1}</td>
+        <td></td>
+        <td class="left" style="font-size:5.5pt">${h.judulKegiatan||""}</td>
+        <td></td>
+        <td class="left"><b>${p.nama||"—"}</b></td>
+        <td>${p.golongan||""}</td>
+        <td class="left" style="font-size:5.5pt">${p.jabatan||""}</td>
+        <td>${lamaHari}</td>
+        <td>${formatTglSPPD(p.tglMulai)}</td>
+        <td>${formatTglSPPD(p.tglSelesai)}</td>
+        <td>${p.tujuan||h.tujuanKota||""}</td>
+        <td>${p.modaTransportasi||""}</td>
+        <td class="num">${uangHarian? formatRupiah(uangHarian):""}</td>
+        <td class="num">${num(p.penginapan)? formatRupiah(num(p.penginapan)):""}</td>
+        <td class="num">${num(p.transportKab)? formatRupiah(num(p.transportKab)):""}</td>
+        <td class="num">${num(p.taksi)? formatRupiah(num(p.taksi)):""}</td>
+        <td class="num">${num(p.representasi)? formatRupiah(num(p.representasi)):""}</td>
+        <td>${p.noTiketPergi||""}</td>
+        <td class="num">${num(p.tiketPergi)? formatRupiah(num(p.tiketPergi)):""}</td>
+        <td>${p.maskapaiPergi||""}</td>
+        <td>${p.noTiketPulang||""}</td>
+        <td class="num">${num(p.tiketPulang)? formatRupiah(num(p.tiketPulang)):""}</td>
+        <td>${p.maskapaiPulang||""}</td>
+        <td>${p.namaPenginapan||""}</td>
+        <td>${p.keterangan||""}</td>
+      </tr>
+    `;
+  }).join("");
+  return `
+    <div class="sheet landscape">
+      ${kopHTML()}
+      <div class="doc-title">REKAPITULASI SPPD LUAR KOTA</div>
+      <div class="doc-subtitle">
+        <div>${h.judulKegiatan||"—"}</div>
+        <div style="margin-top:3px">Tahun Anggaran ${tahun} &nbsp;|&nbsp; SPT Nomor: <b>${h.nomorSPT||"—"}</b></div>
+      </div>
+      <table class="sppd-rekap-table">
+        <thead>
+          <tr>
+            <th rowspan="2" style="width:2%">NO</th>
+            <th rowspan="2" style="width:4%">NO. KUITANSI</th>
+            <th rowspan="2" style="width:8%">KEGIATAN</th>
+            <th rowspan="2" style="width:4%">NO SPM</th>
+            <th rowspan="2" style="width:8%">NAMA PEGAWAI</th>
+            <th rowspan="2" style="width:3%">GOL</th>
+            <th rowspan="2" style="width:7%">JABATAN</th>
+            <th rowspan="2" style="width:3.5%">JANGKA WAKTU</th>
+            <th rowspan="2" style="width:5%">TGL MULAI KEGIATAN</th>
+            <th rowspan="2" style="width:5%">TGL SELESAI KEGIATAN</th>
+            <th rowspan="2" style="width:5%">TUJUAN</th>
+            <th rowspan="2" style="width:4%">MODA TRANSPORTASI</th>
+            <th rowspan="2" style="width:5%">UANG HARIAN</th>
+            <th rowspan="2" style="width:5%">UANG PENGINAPAN</th>
+            <th rowspan="2" style="width:5%">UANG TRANSPORT</th>
+            <th rowspan="2" style="width:4%">TAKSI</th>
+            <th rowspan="2" style="width:4%">UANG REPRESENTASI</th>
+            <th colspan="3" style="width:13%">NOMOR TIKET PESAWAT BERANGKAT</th>
+            <th colspan="3" style="width:13%">NOMOR TIKET PESAWAT KEMBALI</th>
+            <th rowspan="2" style="width:5%">NAMA PENGINAPAN</th>
+            <th rowspan="2" style="width:5%">KETERANGAN</th>
+          </tr>
+          <tr>
+            <th>NO TIKET</th><th>HARGA TIKET</th><th>MASKAPAI</th>
+            <th>NO TIKET</th><th>HARGA TIKET</th><th>MASKAPAI</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function sheetRekapSPPDCombinedHTML(sessions){
+  const tahun = new Date().getFullYear();
+  let counter = 0;
+  const allRows = sessions.flatMap(s=>{
+    const d = s.data || {};
+    const h = d.header || {};
+    return (d.pegawai||[]).map(p=>{
+      counter++;
+      const lamaHari = num(p.lamaHari) || hitungLamaHari(p.tglMulai, p.tglSelesai) || "";
+      const uangHarian = num(p.uangHarian) * (num(p.lamaHari)||1);
+      return `
+        <tr>
+          <td>${counter}</td>
+          <td></td>
+          <td class="left" style="font-size:5.5pt">${h.judulKegiatan||""}</td>
+          <td></td>
+          <td class="left"><b>${p.nama||"—"}</b></td>
+          <td>${p.golongan||""}</td>
+          <td class="left" style="font-size:5.5pt">${p.jabatan||""}</td>
+          <td>${lamaHari}</td>
+          <td>${formatTglSPPD(p.tglMulai)}</td>
+          <td>${formatTglSPPD(p.tglSelesai)}</td>
+          <td>${p.tujuan||h.tujuanKota||""}</td>
+          <td>${p.modaTransportasi||""}</td>
+          <td class="num">${uangHarian? formatRupiah(uangHarian):""}</td>
+          <td class="num">${num(p.penginapan)? formatRupiah(num(p.penginapan)):""}</td>
+          <td class="num">${num(p.transportKab)? formatRupiah(num(p.transportKab)):""}</td>
+          <td class="num">${num(p.taksi)? formatRupiah(num(p.taksi)):""}</td>
+          <td class="num">${num(p.representasi)? formatRupiah(num(p.representasi)):""}</td>
+          <td>${p.noTiketPergi||""}</td>
+          <td class="num">${num(p.tiketPergi)? formatRupiah(num(p.tiketPergi)):""}</td>
+          <td>${p.maskapaiPergi||""}</td>
+          <td>${p.noTiketPulang||""}</td>
+          <td class="num">${num(p.tiketPulang)? formatRupiah(num(p.tiketPulang)):""}</td>
+          <td>${p.maskapaiPulang||""}</td>
+          <td>${p.namaPenginapan||""}</td>
+          <td>${p.keterangan||""}</td>
+        </tr>`;
+    });
+  }).join("");
+  return `
+    <div class="sheet landscape">
+      ${kopHTML()}
+      <div class="doc-title">REKAPITULASI SPPD LUAR KOTA</div>
+      <div class="doc-subtitle">
+        <div>Tahun Anggaran ${tahun}</div>
+      </div>
+      <table class="sppd-rekap-table">
+        <thead>
+          <tr>
+            <th rowspan="2" style="width:2%">NO</th>
+            <th rowspan="2" style="width:4%">NO. KUITANSI</th>
+            <th rowspan="2" style="width:8%">KEGIATAN</th>
+            <th rowspan="2" style="width:4%">NO SPM</th>
+            <th rowspan="2" style="width:8%">NAMA PEGAWAI</th>
+            <th rowspan="2" style="width:3%">GOL</th>
+            <th rowspan="2" style="width:7%">JABATAN</th>
+            <th rowspan="2" style="width:3.5%">JANGKA WAKTU</th>
+            <th rowspan="2" style="width:5%">TGL MULAI KEGIATAN</th>
+            <th rowspan="2" style="width:5%">TGL SELESAI KEGIATAN</th>
+            <th rowspan="2" style="width:5%">TUJUAN</th>
+            <th rowspan="2" style="width:4%">MODA TRANSPORTASI</th>
+            <th rowspan="2" style="width:5%">UANG HARIAN</th>
+            <th rowspan="2" style="width:5%">UANG PENGINAPAN</th>
+            <th rowspan="2" style="width:5%">UANG TRANSPORT</th>
+            <th rowspan="2" style="width:4%">TAKSI</th>
+            <th rowspan="2" style="width:4%">UANG REPRESENTASI</th>
+            <th colspan="3" style="width:13%">NOMOR TIKET PESAWAT BERANGKAT</th>
+            <th colspan="3" style="width:13%">NOMOR TIKET PESAWAT KEMBALI</th>
+            <th rowspan="2" style="width:5%">NAMA PENGINAPAN</th>
+            <th rowspan="2" style="width:5%">KETERANGAN</th>
+          </tr>
+          <tr>
+            <th>NO TIKET</th><th>HARGA TIKET</th><th>MASKAPAI</th>
+            <th>NO TIKET</th><th>HARGA TIKET</th><th>MASKAPAI</th>
+          </tr>
+        </thead>
+        <tbody>${allRows}</tbody>
+      </table>
     </div>
   `;
 }
@@ -2249,6 +2507,260 @@ async function printRekap(){
     injectPrintAndPrint(sheetRekapHTML());
   }
 }
+async function printRekapSPPD(){
+  try {
+    const resp = await fetch('/api/sessions');
+    const json = await resp.json();
+    if (json.success && json.data && json.data.length > 0){
+      injectPrintAndPrint(sheetRekapSPPDCombinedHTML(json.data));
+      return;
+    }
+  } catch(e){}
+  if (!validateBeforePrint()) return;
+  injectPrintAndPrint(sheetRekapSPPDHTML());
+}
+
+/* ================================================================
+   REKAP SPPD SCREEN + EXCEL EXPORT
+   ================================================================ */
+function rekapSPPDRows(h, pegawaiArr){
+  h = h || state.header;
+  pegawaiArr = pegawaiArr || state.pegawai;
+  return pegawaiArr.map((p,i)=>{
+    const lamaHari = num(p.lamaHari) || hitungLamaHari(p.tglMulai, p.tglSelesai) || "";
+    const uangHarian = num(p.uangHarian) * (num(p.lamaHari)||1);
+    return {
+      no: i+1,
+      noKuitansi: "",
+      kegiatan: h.judulKegiatan||"",
+      noSPM: "",
+      namaPegawai: p.nama||"",
+      gol: p.golongan||"",
+      jabatan: p.jabatan||"",
+      jangkaWaktu: lamaHari,
+      tglMulai: formatTglSPPD(p.tglMulai),
+      tglSelesai: formatTglSPPD(p.tglSelesai),
+      tujuan: p.tujuan||h.tujuanKota||"",
+      modaTransportasi: p.modaTransportasi||"",
+      uangHarian: uangHarian||"",
+      uangPenginapan: num(p.penginapan)||"",
+      uangTransport: num(p.transportKab)||"",
+      taksi: num(p.taksi)||"",
+      uangRepresentasi: num(p.representasi)||"",
+      noTiketPergi: p.noTiketPergi||"",
+      hargaTiketPergi: num(p.tiketPergi)||"",
+      maskapaiPergi: p.maskapaiPergi||"",
+      noTiketPulang: p.noTiketPulang||"",
+      hargaTiketPulang: num(p.tiketPulang)||"",
+      maskapaiPulang: p.maskapaiPulang||"",
+      namaPenginapan: p.namaPenginapan||"",
+      keterangan: p.keterangan||""
+    };
+  });
+}
+
+async function _fetchAllSPPDRows(){
+  try {
+    const resp = await fetch('/api/sessions');
+    const json = await resp.json();
+    if (json.success && json.data && json.data.length > 0){
+      let combined = [];
+      json.data.forEach(s=>{
+        const d = s.data || {};
+        combined = combined.concat(rekapSPPDRows(d.header||{}, d.pegawai||[]));
+      });
+      return { rows: combined.map((r,i)=>({...r, no:i+1})), sesiCount: json.data.length, fromServer: true };
+    }
+  } catch(e){}
+  return { rows: rekapSPPDRows(state.header, state.pegawai), sesiCount: 1, fromServer: false };
+}
+
+function _rekapSPPDTableHTML(rows){
+  const trRows = rows.map(r=>`
+    <tr>
+      <td class="ctr">${r.no}</td>
+      <td>${r.noKuitansi}</td>
+      <td class="wrap">${r.kegiatan}</td>
+      <td>${r.noSPM}</td>
+      <td><b>${r.namaPegawai}</b></td>
+      <td class="ctr">${r.gol}</td>
+      <td class="wrap">${r.jabatan}</td>
+      <td class="ctr">${r.jangkaWaktu}</td>
+      <td class="ctr">${r.tglMulai}</td>
+      <td class="ctr">${r.tglSelesai}</td>
+      <td>${r.tujuan}</td>
+      <td>${r.modaTransportasi}</td>
+      <td class="num">${r.uangHarian? formatRupiah(r.uangHarian):""}</td>
+      <td class="num">${r.uangPenginapan? formatRupiah(r.uangPenginapan):""}</td>
+      <td class="num">${r.uangTransport? formatRupiah(r.uangTransport):""}</td>
+      <td class="num">${r.taksi? formatRupiah(r.taksi):""}</td>
+      <td class="num">${r.uangRepresentasi? formatRupiah(r.uangRepresentasi):""}</td>
+      <td>${r.noTiketPergi}</td>
+      <td class="num">${r.hargaTiketPergi? formatRupiah(r.hargaTiketPergi):""}</td>
+      <td>${r.maskapaiPergi}</td>
+      <td>${r.noTiketPulang}</td>
+      <td class="num">${r.hargaTiketPulang? formatRupiah(r.hargaTiketPulang):""}</td>
+      <td>${r.maskapaiPulang}</td>
+      <td>${r.namaPenginapan}</td>
+      <td>${r.keterangan}</td>
+    </tr>
+  `).join("");
+  return `<table class="rekap-sppd-screen-table">
+    <thead>
+      <tr>
+        <th rowspan="2" style="min-width:32px">No</th>
+        <th rowspan="2" style="min-width:70px">No. Kuitansi</th>
+        <th rowspan="2" style="min-width:120px">Kegiatan</th>
+        <th rowspan="2" style="min-width:80px">No SPM</th>
+        <th rowspan="2" style="min-width:130px">Nama Pegawai</th>
+        <th rowspan="2" style="min-width:34px">Gol</th>
+        <th rowspan="2" style="min-width:100px">Jabatan</th>
+        <th rowspan="2" style="min-width:54px">Jangka Waktu</th>
+        <th rowspan="2" style="min-width:70px">Tgl Mulai</th>
+        <th rowspan="2" style="min-width:70px">Tgl Selesai</th>
+        <th rowspan="2" style="min-width:64px">Tujuan</th>
+        <th rowspan="2" style="min-width:68px">Moda Trans&shy;portasi</th>
+        <th rowspan="2" style="min-width:80px">Uang Harian</th>
+        <th rowspan="2" style="min-width:80px">Uang Penginapan</th>
+        <th rowspan="2" style="min-width:80px">Uang Transport</th>
+        <th rowspan="2" style="min-width:56px">Taksi</th>
+        <th rowspan="2" style="min-width:78px">Uang Representasi</th>
+        <th colspan="3" class="th-group" style="min-width:240px">Tiket Pesawat Berangkat</th>
+        <th colspan="3" class="th-group" style="min-width:240px">Tiket Pesawat Kembali</th>
+        <th rowspan="2" style="min-width:80px">Nama Penginapan</th>
+        <th rowspan="2" style="min-width:68px">Keterangan</th>
+      </tr>
+      <tr>
+        <th style="min-width:80px">No Tiket</th>
+        <th style="min-width:84px">Harga Tiket</th>
+        <th style="min-width:76px">Maskapai</th>
+        <th style="min-width:80px">No Tiket</th>
+        <th style="min-width:84px">Harga Tiket</th>
+        <th style="min-width:76px">Maskapai</th>
+      </tr>
+    </thead>
+    <tbody>${trRows}</tbody>
+  </table>`;
+}
+
+async function renderRekapSPPDScreen(){
+  const container = document.getElementById('rekap-sppd-container');
+  const subtitle = document.getElementById('rekap-sppd-subtitle');
+  container.innerHTML = '<div class="kelola-empty" style="padding:32px">Memuat data dari server…</div>';
+  const { rows, sesiCount, fromServer } = await _fetchAllSPPDRows();
+  if (!rows.length){
+    container.innerHTML = '<div class="kelola-empty" style="padding:32px">Belum ada data pegawai.</div>';
+    subtitle.textContent = "";
+    return;
+  }
+  subtitle.textContent = fromServer
+    ? `${sesiCount} sesi · ${rows.length} pegawai`
+    : (state.header.judulKegiatan ? `${state.header.judulKegiatan} — ${state.header.nomorSPT||""}` : "(sesi aktif)");
+  const tahun = new Date().getFullYear();
+  container.innerHTML = `
+    <div style="padding:16px 20px 8px; font-size:12px; color:var(--text-2)">
+      Tahun Anggaran: <b style="color:var(--gold-soft)">${tahun}</b>
+      &nbsp;|&nbsp; ${sesiCount} sesi &nbsp;|&nbsp; ${rows.length} pegawai
+    </div>
+    ${_rekapSPPDTableHTML(rows)}
+  `;
+}
+
+async function exportRekapSPPDExcel(){
+  if (typeof XLSX === 'undefined'){ toast("⚠ Library Excel belum dimuat, coba refresh halaman"); return; }
+  toast("Menyiapkan data…");
+  const { rows, sesiCount } = await _fetchAllSPPDRows();
+  if (!rows.length){ toast("⚠ Tidak ada data untuk diekspor"); return; }
+  const tahun = new Date().getFullYear();
+  const C = 24; // last column index (25 columns, 0-based)
+
+  const header1 = [
+    "NO","NO. KUITANSI","KEGIATAN","NO SPM","NAMA PEGAWAI","GOL","JABATAN",
+    "JANGKA WAKTU","TGL MULAI KEGIATAN","TGL SELESAI KEGIATAN","TUJUAN","MODA TRANSPORTASI",
+    "UANG HARIAN","UANG PENGINAPAN","UANG TRANSPORT","TAKSI","UANG REPRESENTASI",
+    "NOMOR TIKET PESAWAT BERANGKAT","","",
+    "NOMOR TIKET PESAWAT KEMBALI","","",
+    "NAMA PENGINAPAN","KETERANGAN"
+  ];
+  const header2 = [
+    "","","","","","","","","","","","","","","","","",
+    "NO TIKET","HARGA TIKET BERANGKAT","NAMA MASKAPAI BERANGKAT",
+    "NO TIKET","HARGA TIKET KEMBALI","NAMA MASKAPAI KEMBALI",
+    "",""
+  ];
+  const dataRows = rows.map(r=>[
+    r.no, r.noKuitansi, r.kegiatan, r.noSPM, r.namaPegawai, r.gol, r.jabatan,
+    r.jangkaWaktu, r.tglMulai, r.tglSelesai, r.tujuan, r.modaTransportasi,
+    r.uangHarian||0, r.uangPenginapan||0, r.uangTransport||0, r.taksi||0, r.uangRepresentasi||0,
+    r.noTiketPergi, r.hargaTiketPergi||0, r.maskapaiPergi,
+    r.noTiketPulang, r.hargaTiketPulang||0, r.maskapaiPulang,
+    r.namaPenginapan, r.keterangan
+  ]);
+
+  // Row layout (0-indexed):
+  // 0  : instansi l1
+  // 1  : instansi l2
+  // 2  : instansi l3
+  // 3  : instansi l4 (bold)
+  // 4  : alamat
+  // 5  : laman/surel
+  // 6  : (empty separator)
+  // 7  : judul
+  // 8  : subtitle tahun
+  // 9  : (empty)
+  // 10 : header1
+  // 11 : header2
+  // 12+: data
+  const R_H1 = 10, R_H2 = 11;
+
+  const ws = XLSX.utils.aoa_to_sheet([
+    ["KEMENTERIAN IMIGRASI DAN PEMASYARAKATAN REPUBLIK INDONESIA"],
+    ["DIREKTORAT JENDERAL IMIGRASI"],
+    ["KANTOR WILAYAH KALIMANTAN BARAT"],
+    ["KANTOR IMIGRASI KELAS I TPI PONTIANAK"],
+    ["Jalan Letjen. Sutoyo No. 122 Pontianak 78121"],
+    ["Laman: www.pontianak.imigrasi.go.id  |  Surel: keuangan.kanimptk@gmail.com"],
+    [],
+    ["REKAPITULASI SPPD LUAR KOTA"],
+    [`Tahun Anggaran ${tahun}`],
+    [],
+    header1,
+    header2,
+    ...dataRows
+  ]);
+
+  ws['!merges'] = [
+    // kop rows — merge across all columns
+    ...([0,1,2,3,4,5,7,8]).map(r=>({ s:{r,c:0}, e:{r,c:C} })),
+    // header1: tiket group labels
+    { s:{r:R_H1,c:17}, e:{r:R_H1,c:19} },
+    { s:{r:R_H1,c:20}, e:{r:R_H1,c:22} },
+    // rowspan-2 columns in header
+    ...[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,23,24].map(c=>({ s:{r:R_H1,c}, e:{r:R_H2,c} }))
+  ];
+
+  ws['!cols'] = [
+    {wch:4},{wch:12},{wch:40},{wch:12},{wch:22},{wch:6},{wch:28},
+    {wch:8},{wch:12},{wch:12},{wch:12},{wch:14},
+    {wch:14},{wch:14},{wch:14},{wch:12},{wch:14},
+    {wch:18},{wch:16},{wch:20},
+    {wch:18},{wch:16},{wch:20},
+    {wch:18},{wch:14}
+  ];
+
+  // Row heights for kop
+  ws['!rows'] = [
+    {hpt:14},{hpt:13},{hpt:13},{hpt:16},{hpt:12},{hpt:12},
+    {hpt:6},{hpt:18},{hpt:13},{hpt:6}
+  ];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "SPPD Luar Kota");
+  XLSX.writeFile(wb, `Rekap_SPPD_${tahun}.xlsx`);
+}
+
+document.getElementById('btn-export-excel-sppd').addEventListener('click', exportRekapSPPDExcel);
+document.getElementById('btn-print-sppd-tab').addEventListener('click', ()=>printRekapSPPD());
 
 /* ================================================================
    KELOLA REKAP — session management
